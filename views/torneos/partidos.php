@@ -18,16 +18,31 @@ $resumen = static function (array $sets): array {
     return ['sets' => $sa . '-' . $sb, 'detalle' => implode(', ', $detalle)];
 };
 ?>
-<section class="page-head">
-    <div>
-        <h1><?= e($torneo['nombre']) ?> · Partidos</h1>
-        <p class="muted">Liga: <?= e((string) $progreso['finalizados']) ?> de <?= e((string) $progreso['total']) ?> partidos jugados.</p>
-    </div>
-    <div class="actions no-print">
-        <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/tabla">🏆 Tabla</a>
-        <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>/partidos.csv">⬇️ CSV</a>
-        <button class="btn btn--ghost btn--sm" onclick="window.print()">🖨️ PDF</button>
-        <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>">Volver</a>
+<?php $pct = $progreso['total'] > 0 ? (int) round(($progreso['finalizados'] / $progreso['total']) * 100) : 0; ?>
+<section class="page-head page-head--hero">
+    <div class="hero-grid">
+        <div>
+            <span class="eyebrow">League match control</span>
+            <h1><?= e($torneo['nombre']) ?> · Partidos</h1>
+            <p class="muted">Seguimiento operativo de la liga con foco en avance, carga y lectura rápida.</p>
+            <div class="meta-row">
+                <span class="meta-pill">📋 <?= e((string) $progreso['finalizados']) ?> / <?= e((string) $progreso['total']) ?> jugados</span>
+                <span class="meta-pill">⚡ <?= e((string) $pct) ?>% completado</span>
+            </div>
+        </div>
+        <div class="hero-side">
+            <div class="hero-card">
+                <span class="hero-card__label">Ritmo competitivo</span>
+                <strong><?= e((string) $pct) ?>%</strong>
+                <div class="progress-bar"><span style="width: <?= e((string) $pct) ?>%"></span></div>
+            </div>
+            <div class="actions no-print">
+                <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/tabla">🏆 Tabla</a>
+                <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>/partidos.csv">⬇️ CSV</a>
+                <button class="btn btn--ghost btn--sm" onclick="window.print()">🖨️ PDF</button>
+                <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>">Volver</a>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -37,6 +52,7 @@ $resumen = static function (array $sets): array {
     <?php foreach ($porRonda as $ronda => $partidos): ?>
         <section class="card">
             <h2>Jornada <?= e((string) $ronda) ?></h2>
+            <div class="table-wrap">
             <table class="table table--matches">
                 <tbody>
                 <?php foreach ($partidos as $p): ?>
@@ -50,7 +66,7 @@ $resumen = static function (array $sets): array {
                         <td class="text-right <?= $ganaA ? 'winner' : '' ?>"><?= e($p['a_label'] ?? 'BYE') ?></td>
                         <td class="score">
                             <?php if ($fin): ?>
-                                <strong><?= e($r['sets']) ?></strong>
+                                <span class="score-chip"><?= e($r['sets']) ?></span>
                                 <?php if ($p['tipo_resultado'] !== 'NORMAL'): ?>
                                     <small class="badge badge--red"><?= e(\PingPong\Domain\TipoResultado::from($p['tipo_resultado'])->label()) ?></small>
                                 <?php elseif ($r['detalle'] !== ''): ?>
@@ -72,6 +88,7 @@ $resumen = static function (array $sets): array {
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         </section>
     <?php endforeach; ?>
 <?php endif; ?>

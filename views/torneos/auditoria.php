@@ -31,34 +31,44 @@ $resumenJson = static function (?string $json): string {
     return implode(' · ', $partes);
 };
 ?>
-<section class="page-head">
-    <div>
-        <h1>Auditoría · <?= e($torneo['nombre']) ?></h1>
-        <p class="muted">Bitácora de cambios sensibles (marcadores y estado del torneo).</p>
+<section class="page-head page-head--hero">
+    <div class="hero-grid">
+        <div>
+            <span class="eyebrow">Audit trail</span>
+            <h1>Auditoría · <?= e($torneo['nombre']) ?></h1>
+            <p class="muted">Historial sensible de cambios con mejor lectura para revisión y control.</p>
+        </div>
+        <div class="hero-side">
+            <div class="hero-card">
+                <span class="hero-card__label">Registros</span>
+                <strong><?= e((string) count($registros)) ?></strong>
+                <small>Eventos de operación y trazabilidad.</small>
+            </div>
+            <div class="actions"><a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>">Volver</a></div>
+        </div>
     </div>
-    <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>">Volver</a>
 </section>
 
 <section class="card">
     <?php if ($registros === []): ?>
         <p class="muted">Todavía no hay registros de auditoría para este torneo.</p>
     <?php else: ?>
-        <table class="table">
-            <thead>
-                <tr><th>Fecha</th><th>Usuario</th><th>Entidad</th><th>Acción</th><th>Antes</th><th>Después</th></tr>
-            </thead>
-            <tbody>
+        <div class="audit-list">
             <?php foreach ($registros as $r): ?>
-                <tr>
-                    <td class="small"><?= e($r['created_at']) ?></td>
-                    <td><?= e($r['usuario']) ?></td>
-                    <td><?= e($r['entidad']) ?> <span class="muted">#<?= e((string) $r['entidad_id']) ?></span></td>
-                    <td><span class="badge badge--blue"><?= e($accionLabel($r['accion'])) ?></span></td>
-                    <td class="small muted"><?= e($resumenJson($r['valor_anterior'])) ?></td>
-                    <td class="small"><?= e($resumenJson($r['valor_nuevo'])) ?></td>
-                </tr>
+                <article class="audit-item">
+                    <div class="audit-item__head">
+                        <div>
+                            <strong><?= e($r['usuario']) ?></strong>
+                            <div class="audit-item__meta"><?= e($r['entidad']) ?> #<?= e((string) $r['entidad_id']) ?> · <?= e($r['created_at']) ?></div>
+                        </div>
+                        <span class="badge badge--blue"><?= e($accionLabel($r['accion'])) ?></span>
+                    </div>
+                    <div class="audit-item__grid">
+                        <div class="audit-box"><strong>Antes</strong><span class="small muted"><?= e($resumenJson($r['valor_anterior'])) ?></span></div>
+                        <div class="audit-box"><strong>Después</strong><span class="small"><?= e($resumenJson($r['valor_nuevo'])) ?></span></div>
+                    </div>
+                </article>
             <?php endforeach; ?>
-            </tbody>
-        </table>
+        </div>
     <?php endif; ?>
 </section>

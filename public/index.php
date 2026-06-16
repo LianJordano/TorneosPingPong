@@ -6,6 +6,7 @@ use PingPong\Controller\AuditoriaController;
 use PingPong\Controller\AuthController;
 use PingPong\Controller\AyudaController;
 use PingPong\Controller\CatalogoController;
+use PingPong\Controller\ConfiguracionController;
 use PingPong\Controller\DashboardController;
 use PingPong\Controller\EliminatoriaController;
 use PingPong\Controller\InscripcionController;
@@ -60,6 +61,7 @@ $dashboard   = new DashboardController($view, $torneos, $personas);
 $personasCtl = new PersonaController($view, $personas, $areas, $niveles);
 $areasCtl    = new CatalogoController($view, $areas, 'Áreas', 'área', '/areas');
 $nivelesCtl  = new CatalogoController($view, $niveles, 'Niveles', 'nivel', '/niveles');
+$configCtl   = new ConfiguracionController($view, $areas, $niveles);
 $torneosCtl  = new TorneoController($view, $torneos, $inscripciones, $auditoria);
 $inscCtl     = new InscripcionController($view, $torneos, $inscripciones, $personas);
 $ligaCtl     = new LigaController($view, $torneos, $inscripciones, $partidos, $auditoria);
@@ -82,6 +84,9 @@ $router->get('/', static fn (): string => $dashboard->index());
 
 // Glosario / ayuda
 $router->get('/glosario', static fn (): string => $ayudaCtl->glosario());
+
+// Configuración del sistema
+$router->get('/configuracion', static fn (): string => $configCtl->index());
 
 // Personas (jugadores)
 $router->get('/personas',                   static fn (): string => $personasCtl->index());

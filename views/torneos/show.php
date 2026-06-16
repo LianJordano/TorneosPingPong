@@ -8,10 +8,16 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
 $tid = (string) $torneo['id'];
 $formatoLabel = static fn (int $n): string => $n === 1 ? '1 set' : "Mejor de {$n}";
 ?>
-<section class="page-head">
+<section class="page-head page-head--hero tournament-hero">
     <div>
+        <span class="eyebrow">Tournament overview</span>
         <h1><?= e($torneo['nombre']) ?> <span class="badge <?= e($estado->badge()) ?>"><?= e($estado->label()) ?></span></h1>
         <?php if (!empty($torneo['descripcion'])): ?><p class="muted"><?= e($torneo['descripcion']) ?></p><?php endif; ?>
+        <div class="meta-row">
+            <span class="meta-pill">📍 <?= e($torneo['lugar'] ?? 'Lugar pendiente') ?></span>
+            <span class="meta-pill">👥 <?= e((string) count($inscripciones)) ?> inscriptos</span>
+            <span class="meta-pill">🏁 <?= e((string) $torneo['num_clasificados']) ?> clasificados</span>
+        </div>
     </div>
     <a class="btn btn--ghost btn--sm" href="/torneos">Volver</a>
 </section>
@@ -128,40 +134,42 @@ $enLigaOmas = in_array($estado, [\PingPong\Domain\EstadoTorneo::FASE_LIGA, \Ping
         <?php if ($inscripciones === []): ?>
             <p class="muted">Todavía no hay inscritos.</p>
         <?php else: ?>
-            <table class="table">
-                <thead><tr><th>Jugador</th><th>Área</th><th>Pago</th><th></th></tr></thead>
-                <tbody>
-                <?php foreach ($inscripciones as $i): ?>
-                    <tr>
-                        <td><?= e($i['apellido']) ?>, <?= e($i['nombre']) ?></td>
-                        <td><?= e($i['area'] ?? '—') ?></td>
-                        <td>
-                            <?php if ($puedeGestionar): ?>
-                                <form method="post" action="/torneos/<?= e($tid) ?>/inscripciones/<?= e((string) $i['id']) ?>/pago" class="inline">
-                                    <?= csrf_field() ?>
-                                    <button class="badge <?= (int) $i['pago_realizado'] === 1 ? 'badge--green' : 'badge--gray' ?>" type="submit">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr><th>Jugador</th><th>Área</th><th>Pago</th><th></th></tr></thead>
+                    <tbody>
+                    <?php foreach ($inscripciones as $i): ?>
+                        <tr>
+                            <td><?= e($i['apellido']) ?>, <?= e($i['nombre']) ?></td>
+                            <td><?= e($i['area'] ?? '—') ?></td>
+                            <td>
+                                <?php if ($puedeGestionar): ?>
+                                    <form method="post" action="/torneos/<?= e($tid) ?>/inscripciones/<?= e((string) $i['id']) ?>/pago" class="inline">
+                                        <?= csrf_field() ?>
+                                        <button class="badge <?= (int) $i['pago_realizado'] === 1 ? 'badge--green' : 'badge--gray' ?>" type="submit">
+                                            <?= (int) $i['pago_realizado'] === 1 ? 'Pagado' : 'Pendiente' ?>
+                                        </button>
+                                    </form>
+                                <?php else: ?>
+                                    <span class="badge <?= (int) $i['pago_realizado'] === 1 ? 'badge--green' : 'badge--gray' ?>">
                                         <?= (int) $i['pago_realizado'] === 1 ? 'Pagado' : 'Pendiente' ?>
-                                    </button>
-                                </form>
-                            <?php else: ?>
-                                <span class="badge <?= (int) $i['pago_realizado'] === 1 ? 'badge--green' : 'badge--gray' ?>">
-                                    <?= (int) $i['pago_realizado'] === 1 ? 'Pagado' : 'Pendiente' ?>
-                                </span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-right">
-                            <?php if ($puedeGestionar && $estado->permiteInscripciones()): ?>
-                                <form method="post" action="/torneos/<?= e($tid) ?>/inscripciones/<?= e((string) $i['id']) ?>/eliminar" class="inline"
-                                      onsubmit="return confirm('¿Desinscribir a este jugador?');">
-                                    <?= csrf_field() ?>
-                                    <button class="link link--danger" type="submit">Quitar</button>
-                                </form>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-right">
+                                <?php if ($puedeGestionar && $estado->permiteInscripciones()): ?>
+                                    <form method="post" action="/torneos/<?= e($tid) ?>/inscripciones/<?= e((string) $i['id']) ?>/eliminar" class="inline"
+                                          onsubmit="return confirm('¿Desinscribir a este jugador?');">
+                                        <?= csrf_field() ?>
+                                        <button class="link link--danger" type="submit">Quitar</button>
+                                    </form>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         <?php endif; ?>
     </section>
 </div>

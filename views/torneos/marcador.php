@@ -14,14 +14,21 @@ $ganadorActual = isset($partido['ganador_inscripcion_id']) && $partido['ganador_
     ? ((int) $partido['ganador_inscripcion_id'] === (int) $partido['inscripcion_a_id'] ? 'A' : 'B')
     : '';
 ?>
-<section class="page-head">
-    <div>
-        <h1>Cargar marcador</h1>
-        <p class="muted">
-            <strong><?= e($partido['a_label'] ?? 'BYE') ?></strong> vs <strong><?= e($partido['b_label'] ?? 'BYE') ?></strong>
-        </p>
+<section class="page-head page-head--hero">
+    <div class="hero-grid">
+        <div>
+            <span class="eyebrow">Score control</span>
+            <h1>Cargar marcador</h1>
+            <p class="muted"><strong><?= e($partido['a_label'] ?? 'BYE') ?></strong> vs <strong><?= e($partido['b_label'] ?? 'BYE') ?></strong></p>
+            <div class="meta-row">
+                <span class="meta-pill">🎮 <?= e($partido['fase']) ?></span>
+                <span class="meta-pill">🏓 <?= $maxSets === 1 ? '1 set' : 'Mejor de ' . e((string) $maxSets) ?></span>
+            </div>
+        </div>
+        <div class="hero-side">
+            <div class="actions"><a class="btn btn--ghost btn--sm" href="<?= e($partido['fase'] === 'ELIMINATORIA' ? "/torneos/{$tid}/bracket" : "/torneos/{$tid}/partidos") ?>">Volver</a></div>
+        </div>
     </div>
-    <a class="btn btn--ghost btn--sm" href="<?= e($partido['fase'] === 'ELIMINATORIA' ? "/torneos/{$tid}/bracket" : "/torneos/{$tid}/partidos") ?>">Volver</a>
 </section>
 
 <section class="card">
@@ -41,6 +48,7 @@ $ganadorActual = isset($partido['ganador_inscripcion_id']) && $partido['ganador_
     <form method="post" action="/torneos/<?= e($tid) ?>/partidos/<?= e((string) $partido['id']) ?>" id="form-marcador">
         <?= csrf_field() ?>
 
+        <div class="form-panel">
         <div class="form-grid">
             <label class="field">
                 <span>Tipo de resultado</span>
@@ -51,14 +59,17 @@ $ganadorActual = isset($partido['ganador_inscripcion_id']) && $partido['ganador_
                 </select>
             </label>
         </div>
-
-        <div id="picker-ganador" class="field" style="<?= $tipoActual === 'NORMAL' ? 'display:none' : '' ?>">
-            <span>Ganador del partido</span>
-            <label class="radio"><input type="radio" name="ganador" value="A" <?= $ganadorActual === 'A' ? 'checked' : '' ?>> <?= e($partido['a_label'] ?? 'A') ?></label>
-            <label class="radio"><input type="radio" name="ganador" value="B" <?= $ganadorActual === 'B' ? 'checked' : '' ?>> <?= e($partido['b_label'] ?? 'B') ?></label>
         </div>
 
-        <div id="tabla-sets">
+        <div id="picker-ganador" class="form-panel" style="<?= $tipoActual === 'NORMAL' ? 'display:none' : '' ?>">
+            <span class="field"><span>Ganador del partido</span></span>
+            <div class="segmented-choice">
+                <label class="choice-card"><input type="radio" name="ganador" value="A" <?= $ganadorActual === 'A' ? 'checked' : '' ?>><span><span class="choice-card__title"><?= e($partido['a_label'] ?? 'A') ?></span><span class="choice-card__meta">Lado A</span></span></label>
+                <label class="choice-card"><input type="radio" name="ganador" value="B" <?= $ganadorActual === 'B' ? 'checked' : '' ?>><span><span class="choice-card__title"><?= e($partido['b_label'] ?? 'B') ?></span><span class="choice-card__meta">Lado B</span></span></label>
+            </div>
+        </div>
+
+        <div id="tabla-sets" class="form-panel">
             <table class="table table--score">
                 <thead>
                     <tr><th>Set</th><th><?= e($partido['a_label'] ?? 'A') ?></th><th><?= e($partido['b_label'] ?? 'B') ?></th></tr>

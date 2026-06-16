@@ -7,16 +7,31 @@ $tid = (string) $torneo['id'];
 $ligaCompleta = $progreso['total'] > 0 && $progreso['finalizados'] === $progreso['total'];
 $fmtRatio = static fn (?float $r): string => $r === null ? '—' : number_format($r, 2);
 ?>
-<section class="page-head">
-    <div>
-        <h1><?= e($torneo['nombre']) ?> · Tabla de posiciones</h1>
-        <p class="muted"><?= e((string) $progreso['finalizados']) ?>/<?= e((string) $progreso['total']) ?> partidos jugados · clasifican los primeros <?= e((string) $clasificados) ?>.</p>
-    </div>
-    <div class="actions no-print">
-        <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/partidos">📋 Partidos</a>
-        <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>/tabla.csv">⬇️ CSV</a>
-        <button class="btn btn--ghost btn--sm" onclick="window.print()">🖨️ PDF</button>
-        <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>">Volver</a>
+<?php $pct = $progreso['total'] > 0 ? (int) round(($progreso['finalizados'] / $progreso['total']) * 100) : 0; ?>
+<section class="page-head page-head--hero">
+    <div class="hero-grid">
+        <div>
+            <span class="eyebrow">Standings intelligence</span>
+            <h1><?= e($torneo['nombre']) ?> · Tabla de posiciones</h1>
+            <p class="muted">Jerarquía competitiva con desempates visibles y foco en los clasificados.</p>
+            <div class="meta-row">
+                <span class="meta-pill">📊 <?= e((string) $progreso['finalizados']) ?>/<?= e((string) $progreso['total']) ?> jugados</span>
+                <span class="meta-pill">🏁 Top <?= e((string) $clasificados) ?> clasifican</span>
+            </div>
+        </div>
+        <div class="hero-side">
+            <div class="hero-card">
+                <span class="hero-card__label">Avance de la liga</span>
+                <strong><?= e((string) $pct) ?>%</strong>
+                <div class="progress-bar"><span style="width: <?= e((string) $pct) ?>%"></span></div>
+            </div>
+            <div class="actions no-print">
+                <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/partidos">📋 Partidos</a>
+                <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>/tabla.csv">⬇️ CSV</a>
+                <button class="btn btn--ghost btn--sm" onclick="window.print()">🖨️ PDF</button>
+                <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>">Volver</a>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -43,6 +58,7 @@ $enLiga = $torneo['estado'] === \PingPong\Domain\EstadoTorneo::FASE_LIGA->value;
     <?php if ($tabla === []): ?>
         <p class="muted">No hay jugadores en la tabla.</p>
     <?php else: ?>
+        <div class="table-wrap">
         <table class="table table--standings">
             <thead>
                 <tr>
@@ -76,6 +92,7 @@ $enLiga = $torneo['estado'] === \PingPong\Domain\EstadoTorneo::FASE_LIGA->value;
             <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
         <p class="muted small">La fila <span class="swatch swatch--clasifica"></span> indica los clasificados al bracket. El "Desempate" muestra el criterio que definió la posición frente al jugador anterior. <a href="/glosario">¿Qué significan los desempates?</a></p>
     <?php endif; ?>
 </section>

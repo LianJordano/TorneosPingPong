@@ -4,9 +4,21 @@
 $errors = $errors ?? [];
 $old = $old ?? [];
 ?>
-<section class="auth">
+<section class="auth auth--split">
+    <div class="auth__panel">
+        <span class="eyebrow">Ping Pong League Ops</span>
+        <h1>Competencia con estética de producto serio</h1>
+        <p>Administrá torneos, jugadores, fixtures, premios y la vista pública desde un hub visual más sólido y profesional.</p>
+        <ul class="feature-list">
+            <li>Liga + bracket en una sola plataforma</li>
+            <li>Seguimiento visual del estado competitivo</li>
+            <li>Vista pública lista para proyectar</li>
+        </ul>
+    </div>
+
     <div class="card auth__card">
-        <h1>Ingresar</h1>
+        <span class="eyebrow">Acceso seguro</span>
+        <h2>Ingresar</h2>
         <p class="muted">Accedé con tu cuenta para administrar los torneos.</p>
 
         <form method="post" action="/login" novalidate>

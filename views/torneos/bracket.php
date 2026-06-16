@@ -27,16 +27,30 @@ $resumen = static function (array $p): array {
     return ['sa' => $sa, 'sb' => $sb, 'detalle' => implode(', ', $detalle)];
 };
 ?>
-<section class="page-head">
-    <div>
-        <h1><?= e($torneo['nombre']) ?> · Bracket</h1>
-        <p class="muted">Eliminación directa · <?= e((string) $totalRondas) ?> ronda<?= $totalRondas === 1 ? '' : 's' ?>.</p>
-    </div>
-    <div class="actions no-print">
-        <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/tabla">🏆 Tabla</a>
-        <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/podio">🥇 Podio</a>
-        <button class="btn btn--ghost btn--sm" onclick="window.print()">🖨️ PDF</button>
-        <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>">Volver</a>
+<section class="page-head page-head--hero">
+    <div class="hero-grid">
+        <div>
+            <span class="eyebrow">Championship bracket</span>
+            <h1><?= e($torneo['nombre']) ?> · Bracket</h1>
+            <p class="muted">Eliminación directa con lectura mucho más épica y lista para proyectar.</p>
+            <div class="meta-row">
+                <span class="meta-pill">🎯 <?= e((string) $totalRondas) ?> ronda<?= $totalRondas === 1 ? '' : 's' ?></span>
+                <span class="meta-pill">🏆 <?= $campeon !== null ? 'Final definida' : 'Campeonato en juego' ?></span>
+            </div>
+        </div>
+        <div class="hero-side">
+            <div class="hero-card">
+                <span class="hero-card__label">Estado del cuadro</span>
+                <strong><?= $campeon !== null ? 'Listo para consagrar' : 'En competencia' ?></strong>
+                <small><?= $finalizado ? 'El campeón ya quedó oficializado.' : 'Seguimiento visual de cada ronda y final.' ?></small>
+            </div>
+            <div class="actions no-print">
+                <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/tabla">🏆 Tabla</a>
+                <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/podio">🥇 Podio</a>
+                <button class="btn btn--ghost btn--sm" onclick="window.print()">🖨️ PDF</button>
+                <a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>">Volver</a>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -50,6 +64,7 @@ $resumen = static function (array $p): array {
     </div>
 <?php endif; ?>
 
+<section class="bracket-shell">
 <div class="bracket">
     <?php for ($ronda = 1; $ronda <= $totalRondas; $ronda++): ?>
         <div class="bracket__round">
@@ -91,6 +106,7 @@ $resumen = static function (array $p): array {
         </div>
     <?php endfor; ?>
 </div>
+</section>
 
 <?php if ($campeon !== null): ?>
     <section class="consagracion <?= $finalizado ? 'consagracion--oficial' : '' ?>">
