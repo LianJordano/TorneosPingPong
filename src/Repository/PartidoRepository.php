@@ -53,13 +53,19 @@ final class PartidoRepository
     {
         $stmt = $this->db->prepare(
             "SELECT p.*,
-                    CONCAT(pa.apellido, ', ', pa.nombre) AS a_label,
-                    CONCAT(pb.apellido, ', ', pb.nombre) AS b_label
+                    CASE WHEN ia.persona_id_2 IS NULL
+                         THEN CONCAT(pa.apellido, ', ', pa.nombre)
+                         ELSE CONCAT(pa.apellido, ' / ', pa2.apellido) END AS a_label,
+                    CASE WHEN ib.persona_id_2 IS NULL
+                         THEN CONCAT(pb.apellido, ', ', pb.nombre)
+                         ELSE CONCAT(pb.apellido, ' / ', pb2.apellido) END AS b_label
              FROM partido p
              LEFT JOIN inscripcion ia ON ia.id = p.inscripcion_a_id
              LEFT JOIN persona pa     ON pa.id = ia.persona_id
+             LEFT JOIN persona pa2    ON pa2.id = ia.persona_id_2
              LEFT JOIN inscripcion ib ON ib.id = p.inscripcion_b_id
              LEFT JOIN persona pb     ON pb.id = ib.persona_id
+             LEFT JOIN persona pb2    ON pb2.id = ib.persona_id_2
              WHERE p.torneo_id = :t AND p.fase = 'LIGA'
              ORDER BY p.ronda, p.id"
         );
@@ -80,13 +86,19 @@ final class PartidoRepository
     {
         $stmt = $this->db->prepare(
             "SELECT p.*,
-                    CONCAT(pa.apellido, ', ', pa.nombre) AS a_label,
-                    CONCAT(pb.apellido, ', ', pb.nombre) AS b_label
+                    CASE WHEN ia.persona_id_2 IS NULL
+                         THEN CONCAT(pa.apellido, ', ', pa.nombre)
+                         ELSE CONCAT(pa.apellido, ' / ', pa2.apellido) END AS a_label,
+                    CASE WHEN ib.persona_id_2 IS NULL
+                         THEN CONCAT(pb.apellido, ', ', pb.nombre)
+                         ELSE CONCAT(pb.apellido, ' / ', pb2.apellido) END AS b_label
              FROM partido p
              LEFT JOIN inscripcion ia ON ia.id = p.inscripcion_a_id
              LEFT JOIN persona pa     ON pa.id = ia.persona_id
+             LEFT JOIN persona pa2    ON pa2.id = ia.persona_id_2
              LEFT JOIN inscripcion ib ON ib.id = p.inscripcion_b_id
              LEFT JOIN persona pb     ON pb.id = ib.persona_id
+             LEFT JOIN persona pb2    ON pb2.id = ib.persona_id_2
              WHERE p.id = :id"
         );
         $stmt->execute([':id' => $partidoId]);
@@ -242,13 +254,19 @@ final class PartidoRepository
     {
         $stmt = $this->db->prepare(
             "SELECT p.*,
-                    CONCAT(pa.apellido, ', ', pa.nombre) AS a_label,
-                    CONCAT(pb.apellido, ', ', pb.nombre) AS b_label
+                    CASE WHEN ia.persona_id_2 IS NULL
+                         THEN CONCAT(pa.apellido, ', ', pa.nombre)
+                         ELSE CONCAT(pa.apellido, ' / ', pa2.apellido) END AS a_label,
+                    CASE WHEN ib.persona_id_2 IS NULL
+                         THEN CONCAT(pb.apellido, ', ', pb.nombre)
+                         ELSE CONCAT(pb.apellido, ' / ', pb2.apellido) END AS b_label
              FROM partido p
              LEFT JOIN inscripcion ia ON ia.id = p.inscripcion_a_id
              LEFT JOIN persona pa     ON pa.id = ia.persona_id
+             LEFT JOIN persona pa2    ON pa2.id = ia.persona_id_2
              LEFT JOIN inscripcion ib ON ib.id = p.inscripcion_b_id
              LEFT JOIN persona pb     ON pb.id = ib.persona_id
+             LEFT JOIN persona pb2    ON pb2.id = ib.persona_id_2
              WHERE p.torneo_id = :t AND p.fase = 'ELIMINATORIA'
              ORDER BY p.ronda, p.orden_en_ronda"
         );

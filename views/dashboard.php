@@ -4,6 +4,7 @@
 /** @var int $totalPersonas */
 /** @var list<array<string,mixed>> $ultimos */
 /** @var class-string<\PingPong\Domain\EstadoTorneo> $EstadoTorneo */
+/** @var class-string<\PingPong\Domain\Modalidad> $Modalidad */
 $puedeGestionar = $rol?->puedeGestionar() ?? false;
 ?>
 <section class="hero hero--dashboard">
@@ -41,9 +42,15 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
                 <thead><tr><th>Nombre</th><th>Estado</th><th>Inscritos</th><th></th></tr></thead>
                 <tbody>
                 <?php foreach ($ultimos as $t): ?>
-                    <?php $estado = $EstadoTorneo::from($t['estado']); ?>
+                    <?php
+                    $estado = $EstadoTorneo::from($t['estado']);
+                    $esDobles = $Modalidad::from($t['modalidad'])->esDobles();
+                    ?>
                     <tr>
-                        <td><a href="/torneos/<?= e((string) $t['id']) ?>"><?= e($t['nombre']) ?></a></td>
+                        <td>
+                            <a href="/torneos/<?= e((string) $t['id']) ?>"><?= e($t['nombre']) ?></a>
+                            <span class="badge <?= $esDobles ? 'badge--purple' : 'badge--blue' ?>"><?= $esDobles ? '👥 Dobles' : '👤 Individual' ?></span>
+                        </td>
                         <td><span class="badge <?= e($estado->badge()) ?>"><?= e($estado->label()) ?></span></td>
                         <td><?= e((string) ($t['inscritos'] ?? 0)) ?></td>
                         <td class="text-right"><a class="link" href="/torneos/<?= e((string) $t['id']) ?>">Ver →</a></td>

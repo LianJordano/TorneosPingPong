@@ -1,12 +1,18 @@
 <?php
 /** @var array<string,mixed> $torneo */
 /** @var \PingPong\Domain\EstadoTorneo $estado */
+/** @var \PingPong\Domain\Modalidad $modalidad */
+/** @var \PingPong\Domain\Emparejamiento $emparejamiento */
 /** @var list<\PingPong\Domain\EstadoTorneo> $transiciones */
 /** @var list<array<string,mixed>> $inscripciones */
 /** @var list<array<string,mixed>> $disponibles */
 $puedeGestionar = $rol?->puedeGestionar() ?? false;
 $tid = (string) $torneo['id'];
 $formatoLabel = static fn (int $n): string => $n === 1 ? '1 set' : "Mejor de {$n}";
+$esDobles = $modalidad->esDobles();
+$esParejaManual = $esDobles && !$emparejamiento->esAleatorio();
+$esParejaAleatoria = $esDobles && $emparejamiento->esAleatorio();
+$rotuloParticipante = $esDobles ? 'parejas' : 'jugadores';
 ?>
 <section class="page-head page-head--hero tournament-hero">
     <div>
@@ -15,7 +21,8 @@ $formatoLabel = static fn (int $n): string => $n === 1 ? '1 set' : "Mejor de {$n
         <?php if (!empty($torneo['descripcion'])): ?><p class="muted"><?= e($torneo['descripcion']) ?></p><?php endif; ?>
         <div class="meta-row">
             <span class="meta-pill">📍 <?= e($torneo['lugar'] ?? 'Lugar pendiente') ?></span>
-            <span class="meta-pill">👥 <?= e((string) count($inscripciones)) ?> inscriptos</span>
+            <span class="meta-pill"><?= $esDobles ? '👥👥' : '👤' ?> <?= e($modalidad->label()) ?><?= $esDobles ? ' · ' . e($emparejamiento->esAleatorio() ? 'sorteo' : 'manual') : '' ?></span>
+            <span class="meta-pill">👥 <?= e((string) count($inscripciones)) ?> <?= e($rotuloParticipante) ?></span>
             <span class="meta-pill">🏁 <?= e((string) $torneo['num_clasificados']) ?> clasificados</span>
         </div>
     </div>
@@ -110,25 +117,51 @@ $enLigaOmas = in_array($estado, [\PingPong\Domain\EstadoTorneo::FASE_LIGA, \Ping
     </section>
 
     <section class="card">
-        <h2>Inscritos (<?= e((string) count($inscripciones)) ?>)</h2>
+        <h2><?= $esDobles ? 'Parejas inscritas' : 'Inscritos' ?> (<?= e((string) count($inscripciones)) ?>)</h2>
+
+        <?php
+        $opcionesPersona = static function (array $disponibles, string $placeholder): string {
+            $html = '<option value="">' . e($placeholder) . '</option>';
+            foreach ($disponibles as $d) {
+                $area = !empty($d['area']) ? ' (' . e($d['area']) . ')' : '';
+                $html .= '<option value="' . e((string) $d['id']) . '">'
+                    . e($d['apellido']) . ', ' . e($d['nombre']) . $area . '</option>';
+            }
+            return $html;
+        };
+        ?>
 
         <?php if ($puedeGestionar && $estado->permiteInscripciones()): ?>
-            <?php if ($disponibles === []): ?>
-                <p class="muted">No quedan jugadores activos por inscribir.</p>
+            <?php if ($disponibles === [] || ($esParejaManual && count($disponibles) < 2)): ?>
+                <p class="muted">No quedan jugadores suficientes por inscribir.</p>
+            <?php elseif ($esParejaManual): ?>
+                <form method="post" action="/torneos/<?= e($tid) ?>/inscripciones" class="inline-form">
+                    <?= csrf_field() ?>
+                    <select name="persona_id" required><?= $opcionesPersona($disponibles, '— Jugador 1 —') ?></select>
+                    <select name="persona_id_2" required><?= $opcionesPersona($disponibles, '— Jugador 2 —') ?></select>
+                    <button class="btn btn--primary btn--sm" type="submit">Inscribir pareja</button>
+                </form>
+                <p class="hint">Elegí los DOS integrantes de la pareja.</p>
             <?php else: ?>
                 <form method="post" action="/torneos/<?= e($tid) ?>/inscripciones" class="inline-form">
                     <?= csrf_field() ?>
-                    <select name="persona_id" required>
-                        <option value="">— Elegí un jugador —</option>
-                        <?php foreach ($disponibles as $d): ?>
-                            <option value="<?= e((string) $d['id']) ?>"><?= e($d['apellido']) ?>, <?= e($d['nombre']) ?><?= !empty($d['area']) ? ' (' . e($d['area']) . ')' : '' ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <select name="persona_id" required><?= $opcionesPersona($disponibles, '— Elegí un jugador —') ?></select>
                     <button class="btn btn--primary btn--sm" type="submit">Inscribir</button>
                 </form>
+                <?php if ($esParejaAleatoria): ?>
+                    <p class="hint">Inscribí jugadores individuales. Las parejas se sortean al cerrar la inscripción.</p>
+                <?php endif; ?>
             <?php endif; ?>
         <?php elseif ($puedeGestionar): ?>
             <p class="hint">Las inscripciones están <strong>cerradas</strong> en el estado actual.</p>
+        <?php endif; ?>
+
+        <?php if ($puedeGestionar && $esParejaAleatoria && $estado === \PingPong\Domain\EstadoTorneo::INSCRIPCION_CERRADA): ?>
+            <form method="post" action="/torneos/<?= e($tid) ?>/sortear-parejas" class="inline"
+                  onsubmit="return confirm('¿Sortear las parejas al azar entre los inscriptos individuales?');">
+                <?= csrf_field() ?>
+                <button class="btn btn--sm" type="submit">🎲 Sortear parejas</button>
+            </form>
         <?php endif; ?>
 
         <?php if ($inscripciones === []): ?>
@@ -136,11 +169,11 @@ $enLigaOmas = in_array($estado, [\PingPong\Domain\EstadoTorneo::FASE_LIGA, \Ping
         <?php else: ?>
             <div class="table-wrap">
                 <table class="table">
-                    <thead><tr><th>Jugador</th><th>Área</th><th>Pago</th><th></th></tr></thead>
+                    <thead><tr><th><?= $esDobles ? 'Pareja' : 'Jugador' ?></th><th>Área</th><th>Pago</th><th></th></tr></thead>
                     <tbody>
                     <?php foreach ($inscripciones as $i): ?>
                         <tr>
-                            <td><?= e($i['apellido']) ?>, <?= e($i['nombre']) ?></td>
+                            <td><?= e($i['label']) ?></td>
                             <td><?= e($i['area'] ?? '—') ?></td>
                             <td>
                                 <?php if ($puedeGestionar): ?>

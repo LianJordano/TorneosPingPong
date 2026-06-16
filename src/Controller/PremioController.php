@@ -135,7 +135,7 @@ final class PremioController extends Controller
         $labels = [];
         $jugadores = [];
         foreach ($inscripciones as $i) {
-            $labels[(int) $i['id']] = $i['apellido'] . ', ' . $i['nombre'];
+            $labels[(int) $i['id']] = $i['label'];
             $jugadores[] = ['id' => (int) $i['id'], 'nombre' => $labels[(int) $i['id']]];
         }
 

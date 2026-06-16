@@ -60,7 +60,7 @@ final class EliminatoriaController extends Controller
         }
 
         $jugadores = array_map(
-            static fn (array $i): array => ['id' => (int) $i['id'], 'nombre' => $i['apellido'] . ', ' . $i['nombre']],
+            static fn (array $i): array => ['id' => (int) $i['id'], 'nombre' => $i['label']],
             $this->inscripciones->porTorneo($id)
         );
         $tabla = TablaPosiciones::calcular($jugadores, $this->partidos->ligaAgregada($id), (int) $torneo['puntos_por_victoria']);

@@ -102,6 +102,12 @@ CREATE TABLE torneo (
                                 'FASE_LIGA','FASE_ELIMINATORIA','FINALIZADO','CANCELADO')
                                NOT NULL DEFAULT 'BORRADOR',
 
+    -- Modalidad: INDIVIDUAL (una persona por inscripción) o DOBLES (pareja).
+    -- emparejamiento solo aplica a DOBLES: MANUAL = elegidas al inscribir;
+    -- ALEATORIO = sorteadas por el sistema al cerrar la inscripción.
+    modalidad              ENUM('INDIVIDUAL','DOBLES')  NOT NULL DEFAULT 'INDIVIDUAL',
+    emparejamiento         ENUM('MANUAL','ALEATORIO')   NOT NULL DEFAULT 'MANUAL',
+
     -- Formato de juego (mejor de N sets). Override por fase: liga vs bracket.
     formato_sets_liga      TINYINT UNSIGNED NOT NULL DEFAULT 3,
     formato_sets_bracket   TINYINT UNSIGNED NOT NULL DEFAULT 5,
@@ -137,14 +143,19 @@ CREATE TABLE inscripcion (
     id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
     torneo_id       INT UNSIGNED NOT NULL,
     persona_id      INT UNSIGNED NOT NULL,
+    persona_id_2    INT UNSIGNED NULL,             -- compañero/a en dobles (NULL = individual)
     siembra         SMALLINT UNSIGNED NULL,        -- seeding opcional
     pago_realizado  TINYINT(1) NOT NULL DEFAULT 0,
     created_at      TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_inscripcion_torneo_persona (torneo_id, persona_id),
+    UNIQUE KEY uq_inscripcion_torneo_persona2 (torneo_id, persona_id_2),
     KEY idx_inscripcion_torneo (torneo_id),
-    CONSTRAINT fk_inscripcion_torneo  FOREIGN KEY (torneo_id)  REFERENCES torneo(id)  ON DELETE CASCADE,
-    CONSTRAINT fk_inscripcion_persona FOREIGN KEY (persona_id) REFERENCES persona(id) ON DELETE RESTRICT
+    CONSTRAINT fk_inscripcion_torneo    FOREIGN KEY (torneo_id)    REFERENCES torneo(id)  ON DELETE CASCADE,
+    CONSTRAINT fk_inscripcion_persona   FOREIGN KEY (persona_id)   REFERENCES persona(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_inscripcion_persona2  FOREIGN KEY (persona_id_2) REFERENCES persona(id) ON DELETE RESTRICT,
+    -- En dobles, la pareja no puede ser la misma persona dos veces.
+    CONSTRAINT chk_inscripcion_distintos CHECK (persona_id_2 IS NULL OR persona_id_2 <> persona_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------

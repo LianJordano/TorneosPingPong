@@ -121,6 +121,7 @@ $router->post('/torneos/{id}/eliminar', static fn (array $p): string => $torneos
 
 // Inscripciones (anidadas en el torneo)
 $router->post('/torneos/{id}/inscripciones',                       static fn (array $p): string => $inscCtl->inscribir($p));
+$router->post('/torneos/{id}/sortear-parejas',                     static fn (array $p): string => $inscCtl->sortearParejas($p));
 $router->post('/torneos/{id}/inscripciones/{inscripcion}/eliminar', static fn (array $p): string => $inscCtl->desinscribir($p));
 $router->post('/torneos/{id}/inscripciones/{inscripcion}/pago',     static fn (array $p): string => $inscCtl->togglePago($p));
 

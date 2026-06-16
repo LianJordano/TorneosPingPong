@@ -385,6 +385,8 @@ h2 { font-size: 1.05rem; color: var(--muted); margin: 1.25rem 0 0.75rem; }
 }
 
 .table tbody tr:hover { background: rgba(239, 246, 255, 0.76); }
+.table tbody a { text-decoration: none; font-weight: 600; }
+.table tbody a:hover { text-decoration: underline; }
 .row--muted { opacity: 0.6; }
 
 .table__title {

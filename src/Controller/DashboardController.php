@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PingPong\Controller;
 
 use PingPong\Domain\EstadoTorneo;
+use PingPong\Domain\Modalidad;
 use PingPong\Http\Controller;
 use PingPong\Repository\PersonaRepository;
 use PingPong\Repository\TorneoRepository;
@@ -39,6 +40,7 @@ final class DashboardController extends Controller
             'totalPersonas'  => count($this->personas->all()),
             'ultimos'        => array_slice($torneos, 0, 5),
             'EstadoTorneo'   => EstadoTorneo::class,
+            'Modalidad'      => Modalidad::class,
         ]);
     }
 }

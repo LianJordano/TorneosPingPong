@@ -47,6 +47,35 @@ $formatoLabel = static fn (int $n): string => $n === 1 ? '1 set' : "Mejor de {$n
             </label>
         </div>
 
+        <h2>Modalidad</h2>
+        <div class="form-grid">
+            <label class="field">
+                <span>Modalidad de juego</span>
+                <select name="modalidad" id="modalidad-select">
+                    <option value="INDIVIDUAL" <?= $val('modalidad', 'INDIVIDUAL') === 'INDIVIDUAL' ? 'selected' : '' ?>>Individual</option>
+                    <option value="DOBLES" <?= $val('modalidad', 'INDIVIDUAL') === 'DOBLES' ? 'selected' : '' ?>>Dobles (parejas)</option>
+                </select>
+                <?php if (isset($errors['modalidad'])): ?><em class="field__error"><?= e($errors['modalidad']) ?></em><?php endif; ?>
+            </label>
+            <label class="field">
+                <span>Formación de parejas <small class="muted">(solo dobles)</small></span>
+                <select name="emparejamiento" id="emparejamiento-select">
+                    <option value="MANUAL" <?= $val('emparejamiento', 'MANUAL') === 'MANUAL' ? 'selected' : '' ?>>Manual — se eligen al inscribir</option>
+                    <option value="ALEATORIO" <?= $val('emparejamiento', 'MANUAL') === 'ALEATORIO' ? 'selected' : '' ?>>Aleatorio — las sortea el sistema</option>
+                </select>
+                <?php if (isset($errors['emparejamiento'])): ?><em class="field__error"><?= e($errors['emparejamiento']) ?></em><?php endif; ?>
+            </label>
+        </div>
+        <script>
+            (function () {
+                var modalidad = document.getElementById('modalidad-select');
+                var emparejamiento = document.getElementById('emparejamiento-select');
+                function sync() { emparejamiento.disabled = modalidad.value !== 'DOBLES'; }
+                modalidad.addEventListener('change', sync);
+                sync();
+            })();
+        </script>
+
         <h2>Formato de juego</h2>
         <div class="form-grid">
             <label class="field">

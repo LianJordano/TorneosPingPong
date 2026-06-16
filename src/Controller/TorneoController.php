@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PingPong\Controller;
 
+use PingPong\Domain\Emparejamiento;
 use PingPong\Domain\EstadoTorneo;
+use PingPong\Domain\Modalidad;
 use PingPong\Http\Controller;
 use PingPong\Repository\AuditoriaRepository;
 use PingPong\Repository\InscripcionRepository;
@@ -110,6 +112,8 @@ final class TorneoController extends Controller
             'title'              => $torneo['nombre'],
             'torneo'             => $torneo,
             'estado'             => $estado,
+            'modalidad'          => Modalidad::from($torneo['modalidad']),
+            'emparejamiento'     => Emparejamiento::from($torneo['emparejamiento']),
             'transiciones'       => $transiciones,
             'inscripciones'      => $this->inscripciones->porTorneo((int) $torneo['id']),
             'disponibles'        => $estado->permiteInscripciones()
@@ -281,6 +285,8 @@ final class TorneoController extends Controller
             'lugar'                => (string) Request::post('lugar', ''),
             'fecha_inicio'         => (string) Request::post('fecha_inicio', ''),
             'fecha_fin'            => (string) Request::post('fecha_fin', ''),
+            'modalidad'            => (string) Request::post('modalidad', 'INDIVIDUAL'),
+            'emparejamiento'       => (string) Request::post('emparejamiento', 'MANUAL'),
             'formato_sets_liga'    => (string) Request::post('formato_sets_liga', '3'),
             'formato_sets_bracket' => (string) Request::post('formato_sets_bracket', '5'),
             'puntos_por_set'       => (string) Request::post('puntos_por_set', '11'),
@@ -298,6 +304,8 @@ final class TorneoController extends Controller
     {
         $validator = (new Validator($data))
             ->required('nombre', 'Nombre')->maxLen('nombre', 150, 'Nombre')
+            ->in('modalidad', ['INDIVIDUAL', 'DOBLES'], 'Modalidad')
+            ->in('emparejamiento', ['MANUAL', 'ALEATORIO'], 'Emparejamiento')
             ->in('formato_sets_liga', self::FORMATOS, 'Formato de liga')
             ->in('formato_sets_bracket', self::FORMATOS, 'Formato de bracket')
             ->intMin('puntos_por_set', 1, 'Puntos por set')

@@ -39,11 +39,13 @@ final class TorneoRepository
         $stmt = $this->db->prepare(
             'INSERT INTO torneo
                 (nombre, descripcion, lugar, fecha_inicio, fecha_fin,
+                 modalidad, emparejamiento,
                  formato_sets_liga, formato_sets_bracket, puntos_por_set, diferencia_minima,
                  puntos_por_victoria, num_clasificados, posiciones_premiadas,
                  cuota_inscripcion, pozo_total)
              VALUES
                 (:nombre, :descripcion, :lugar, :fecha_inicio, :fecha_fin,
+                 :modalidad, :emparejamiento,
                  :formato_liga, :formato_bracket, :puntos_set, :diferencia,
                  :puntos_victoria, :num_clasificados, :posiciones_premiadas,
                  :cuota, :pozo)'
@@ -59,6 +61,7 @@ final class TorneoRepository
             'UPDATE torneo SET
                 nombre = :nombre, descripcion = :descripcion, lugar = :lugar,
                 fecha_inicio = :fecha_inicio, fecha_fin = :fecha_fin,
+                modalidad = :modalidad, emparejamiento = :emparejamiento,
                 formato_sets_liga = :formato_liga, formato_sets_bracket = :formato_bracket,
                 puntos_por_set = :puntos_set, diferencia_minima = :diferencia,
                 puntos_por_victoria = :puntos_victoria, num_clasificados = :num_clasificados,
@@ -103,6 +106,8 @@ final class TorneoRepository
                 'lugar'                => $origen['lugar'],
                 'fecha_inicio'         => null,
                 'fecha_fin'            => null,
+                'modalidad'            => $origen['modalidad'],
+                'emparejamiento'       => $origen['emparejamiento'],
                 'formato_sets_liga'    => $origen['formato_sets_liga'],
                 'formato_sets_bracket' => $origen['formato_sets_bracket'],
                 'puntos_por_set'       => $origen['puntos_por_set'],
@@ -147,12 +152,17 @@ final class TorneoRepository
             ? null
             : trim((string) $v);
 
+        $modalidad = ($data['modalidad'] ?? 'INDIVIDUAL') === 'DOBLES' ? 'DOBLES' : 'INDIVIDUAL';
+        $emparejamiento = ($data['emparejamiento'] ?? 'MANUAL') === 'ALEATORIO' ? 'ALEATORIO' : 'MANUAL';
+
         return [
             ':nombre'               => trim((string) ($data['nombre'] ?? '')),
             ':descripcion'          => $nullIfEmpty($data['descripcion'] ?? null),
             ':lugar'                => $nullIfEmpty($data['lugar'] ?? null),
             ':fecha_inicio'         => $nullIfEmpty($data['fecha_inicio'] ?? null),
             ':fecha_fin'            => $nullIfEmpty($data['fecha_fin'] ?? null),
+            ':modalidad'            => $modalidad,
+            ':emparejamiento'       => $emparejamiento,
             ':formato_liga'         => (int) ($data['formato_sets_liga'] ?? 3),
             ':formato_bracket'      => (int) ($data['formato_sets_bracket'] ?? 5),
             ':puntos_set'           => (int) ($data['puntos_por_set'] ?? 11),
