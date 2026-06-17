@@ -22,10 +22,11 @@ $resumen = static function (array $sets): array {
 <section class="page-head page-head--hero">
     <div class="hero-grid">
         <div>
-            <span class="eyebrow">League match control</span>
+            <span class="eyebrow">Mesa única · orden de juego</span>
             <h1><?= e($torneo['nombre']) ?> · Partidos</h1>
-            <p class="muted">Seguimiento operativo de la liga con foco en avance, carga y lectura rápida.</p>
+            <p class="muted">Vista pensada para el momento del torneo: mirás la jornada, cargás resultado y pasa el siguiente.</p>
             <div class="meta-row">
+                <span class="meta-pill">🏓 1 mesa disponible</span>
                 <span class="meta-pill">📋 <?= e((string) $progreso['finalizados']) ?> / <?= e((string) $progreso['total']) ?> jugados</span>
                 <span class="meta-pill">⚡ <?= e((string) $pct) ?>% completado</span>
             </div>
@@ -79,7 +80,7 @@ $resumen = static function (array $sets): array {
                         <td class="<?= $ganaB ? 'winner' : '' ?>"><?= e($p['b_label'] ?? 'BYE') ?></td>
                         <td class="text-right">
                             <?php if ($puedeAnotar): ?>
-                                <a class="link" href="/torneos/<?= e($tid) ?>/partidos/<?= e((string) $p['id']) ?>">
+                                <a class="btn btn--sm <?= $fin ? 'btn--ghost' : 'btn--primary' ?> match-action" href="/torneos/<?= e($tid) ?>/partidos/<?= e((string) $p['id']) ?>">
                                     <?= $fin ? 'Editar' : 'Cargar' ?>
                                 </a>
                             <?php endif; ?>

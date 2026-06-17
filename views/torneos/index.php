@@ -10,9 +10,9 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
 ?>
 <section class="page-head page-head--hero">
     <div>
-        <span class="eyebrow">Gestion de Competencia</span>
+        <span class="eyebrow">Mesa única · torneos internos</span>
         <h1>Torneos</h1>
-        <p class="muted">Controlá estados, participantes y etapas con una lectura mucho más limpia.</p>
+        <p class="muted">Elegí rápido qué torneo operar, revisá el estado y seguí la competencia desde el celu o la pantalla compartida.</p>
     </div>
     <div class="actions">
         <a class="btn btn--ghost btn--sm" href="/torneos<?= $incluirArchivados ? '' : '?archivados=1' ?>">
@@ -31,7 +31,7 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
         <div class="table-wrap">
             <table class="table">
                 <thead>
-                    <tr><th>Nombre</th><th>Modalidad</th><th>Estado</th><th>Inscritos</th><th>Fechas</th><th></th></tr>
+                    <tr><th>Nombre</th><th class="hide-mobile">Modalidad</th><th>Estado</th><th>Inscritos</th><th class="hide-mobile">Fechas</th><th></th></tr>
                 </thead>
                 <tbody>
                 <?php foreach ($torneos as $t): ?>
@@ -47,7 +47,7 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
                                 <small class="badge badge--gray">archivado</small>
                             <?php endif; ?>
                         </td>
-                        <td>
+                        <td class="hide-mobile">
                             <span class="badge <?= $esDobles ? 'badge--purple' : 'badge--blue' ?>">
                                 <?= $esDobles ? '👥 Dobles' : '👤 Individual' ?>
                             </span>
@@ -57,7 +57,7 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
                         </td>
                         <td><span class="badge <?= e($estado->badge()) ?>"><?= e($estado->label()) ?></span></td>
                         <td><?= e((string) ($t['inscritos'] ?? 0)) ?></td>
-                        <td><?= e($t['fecha_inicio'] ?? '—') ?> <?= !empty($t['fecha_fin']) ? '→ ' . e($t['fecha_fin']) : '' ?></td>
+                        <td class="hide-mobile"><?= e($t['fecha_inicio'] ?? '—') ?> <?= !empty($t['fecha_fin']) ? '→ ' . e($t['fecha_fin']) : '' ?></td>
                         <td class="text-right"><a class="link" href="/torneos/<?= e((string) $t['id']) ?>">Ver →</a></td>
                     </tr>
                 <?php endforeach; ?>

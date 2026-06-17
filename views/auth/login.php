@@ -7,7 +7,7 @@ $old = $old ?? [];
 <section class="auth auth--split">
     <div class="auth__panel">
         <span class="eyebrow">Ping Pong League Ops</span>
-        <h1>Competencia con estética de producto serio</h1>
+        <h1>Competencia </h1>
         <p>Administrá torneos, jugadores, fixtures, premios y la vista pública desde un hub visual más sólido y profesional.</p>
         <ul class="feature-list">
             <li>Liga + bracket en una sola plataforma</li>

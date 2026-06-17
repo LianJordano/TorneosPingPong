@@ -16,11 +16,12 @@ $rotuloParticipante = $esDobles ? 'parejas' : 'jugadores';
 ?>
 <section class="page-head page-head--hero tournament-hero">
     <div>
-        <span class="eyebrow">Tournament overview</span>
+        <span class="eyebrow">Centro del torneo</span>
         <h1><?= e($torneo['nombre']) ?> <span class="badge <?= e($estado->badge()) ?>"><?= e($estado->label()) ?></span></h1>
         <?php if (!empty($torneo['descripcion'])): ?><p class="muted"><?= e($torneo['descripcion']) ?></p><?php endif; ?>
         <div class="meta-row">
             <span class="meta-pill">📍 <?= e($torneo['lugar'] ?? 'Lugar pendiente') ?></span>
+            <span class="meta-pill">🏓 Mesa única</span>
             <span class="meta-pill"><?= $esDobles ? '👥👥' : '👤' ?> <?= e($modalidad->label()) ?><?= $esDobles ? ' · ' . e($emparejamiento->esAleatorio() ? 'sorteo' : 'manual') : '' ?></span>
             <span class="meta-pill">👥 <?= e((string) count($inscripciones)) ?> <?= e($rotuloParticipante) ?></span>
             <span class="meta-pill">🏁 <?= e((string) $torneo['num_clasificados']) ?> clasificados</span>
@@ -36,7 +37,7 @@ $enLigaOmas = in_array($estado, [\PingPong\Domain\EstadoTorneo::FASE_LIGA, \Ping
     <section class="card liga-nav">
         <?php $enBracket = in_array($estado, [\PingPong\Domain\EstadoTorneo::FASE_ELIMINATORIA, \PingPong\Domain\EstadoTorneo::FINALIZADO], true); ?>
         <?php if ($enLigaOmas): ?>
-            <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/partidos">📋 Partidos</a>
+            <a class="btn btn--primary btn--sm" href="/torneos/<?= e($tid) ?>/partidos">🏓 Operar partidos</a>
             <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/tabla">🏆 Tabla de posiciones</a>
         <?php endif; ?>
         <?php if ($enBracket): ?>
