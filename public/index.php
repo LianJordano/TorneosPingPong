@@ -128,6 +128,7 @@ $router->post('/torneos/{id}/inscripciones/{inscripcion}/pago',     static fn (a
 // Liga: fixture, partidos, marcadores y tabla
 $router->post('/torneos/{id}/fixture',                   static fn (array $p): string => $ligaCtl->generarFixture($p));
 $router->get('/torneos/{id}/partidos',                   static fn (array $p): string => $ligaCtl->partidos($p));
+$router->get('/torneos/{id}/anotador',                   static fn (array $p): string => $ligaCtl->anotador($p));
 $router->get('/torneos/{id}/partidos/{partido}',         static fn (array $p): string => $ligaCtl->marcadorForm($p));
 $router->post('/torneos/{id}/partidos/{partido}',        static fn (array $p): string => $ligaCtl->guardarMarcador($p));
 $router->get('/torneos/{id}/tabla',                      static fn (array $p): string => $ligaCtl->tabla($p));

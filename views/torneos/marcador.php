@@ -13,25 +13,36 @@ $tipoActual = $tipoActual ?? 'NORMAL';
 $ganadorActual = isset($partido['ganador_inscripcion_id']) && $partido['ganador_inscripcion_id'] !== null
     ? ((int) $partido['ganador_inscripcion_id'] === (int) $partido['inscripcion_a_id'] ? 'A' : 'B')
     : '';
+$volver = $partido['fase'] === 'ELIMINATORIA' ? "/torneos/{$tid}/bracket" : "/torneos/{$tid}/partidos";
 ?>
-<section class="page-head page-head--hero">
+<section class="page-head page-head--hero scorekeeper-hero">
     <div class="hero-grid">
         <div>
-            <span class="eyebrow">Score control</span>
+            <span class="eyebrow">Modo anotador · mesa unica</span>
             <h1>Cargar marcador</h1>
-            <p class="muted"><strong><?= e($partido['a_label'] ?? 'BYE') ?></strong> vs <strong><?= e($partido['b_label'] ?? 'BYE') ?></strong></p>
+            <div class="scorekeeper-match" aria-label="Partido actual">
+                <strong><?= e($partido['a_label'] ?? 'BYE') ?></strong>
+                <span>vs</span>
+                <strong><?= e($partido['b_label'] ?? 'BYE') ?></strong>
+            </div>
             <div class="meta-row">
-                <span class="meta-pill">🎮 <?= e($partido['fase']) ?></span>
-                <span class="meta-pill">🏓 <?= $maxSets === 1 ? '1 set' : 'Mejor de ' . e((string) $maxSets) ?></span>
+                <span class="meta-pill">Mesa unica</span>
+                <span class="meta-pill"><?= e($partido['fase']) ?></span>
+                <span class="meta-pill"><?= $maxSets === 1 ? '1 set' : 'Mejor de ' . e((string) $maxSets) ?></span>
             </div>
         </div>
         <div class="hero-side">
-            <div class="actions"><a class="btn btn--ghost btn--sm" href="<?= e($partido['fase'] === 'ELIMINATORIA' ? "/torneos/{$tid}/bracket" : "/torneos/{$tid}/partidos") ?>">Volver</a></div>
+            <div class="hero-card scorekeeper-context">
+                <span class="hero-card__label">Anotacion rapida</span>
+                <strong>Set por set</strong>
+                <small>Guardas y volves a la lista para seguir con el proximo partido.</small>
+            </div>
+            <div class="actions"><a class="btn btn--ghost btn--sm" href="<?= e($volver) ?>">Volver a partidos</a></div>
         </div>
     </div>
 </section>
 
-<section class="card">
+<section class="card scorekeeper-card">
     <p class="hint">
         Formato: <strong><?= $maxSets === 1 ? '1 set' : 'mejor de ' . $maxSets ?></strong>
         (gana quien gane <?= e((string) $reglas->setsParaGanar()) ?> set<?= $reglas->setsParaGanar() > 1 ? 's' : '' ?>).
@@ -48,8 +59,8 @@ $ganadorActual = isset($partido['ganador_inscripcion_id']) && $partido['ganador_
     <form method="post" action="/torneos/<?= e($tid) ?>/partidos/<?= e((string) $partido['id']) ?>" id="form-marcador">
         <?= csrf_field() ?>
 
-        <div class="form-panel">
-        <div class="form-grid">
+        <div class="form-panel scorekeeper-panel">
+        <div class="form-grid scorekeeper-type-grid">
             <label class="field">
                 <span>Tipo de resultado</span>
                 <select name="tipo_resultado" id="tipo-resultado">
@@ -61,7 +72,7 @@ $ganadorActual = isset($partido['ganador_inscripcion_id']) && $partido['ganador_
         </div>
         </div>
 
-        <div id="picker-ganador" class="form-panel" style="<?= $tipoActual === 'NORMAL' ? 'display:none' : '' ?>">
+        <div id="picker-ganador" class="form-panel scorekeeper-panel" style="<?= $tipoActual === 'NORMAL' ? 'display:none' : '' ?>">
             <span class="field"><span>Ganador del partido</span></span>
             <div class="segmented-choice">
                 <label class="choice-card"><input type="radio" name="ganador" value="A" <?= $ganadorActual === 'A' ? 'checked' : '' ?>><span><span class="choice-card__title"><?= e($partido['a_label'] ?? 'A') ?></span><span class="choice-card__meta">Lado A</span></span></label>
@@ -69,7 +80,7 @@ $ganadorActual = isset($partido['ganador_inscripcion_id']) && $partido['ganador_
             </div>
         </div>
 
-        <div id="tabla-sets" class="form-panel">
+        <div id="tabla-sets" class="form-panel scorekeeper-panel">
             <table class="table table--score">
                 <thead>
                     <tr><th>Set</th><th><?= e($partido['a_label'] ?? 'A') ?></th><th><?= e($partido['b_label'] ?? 'B') ?></th></tr>
@@ -87,9 +98,12 @@ $ganadorActual = isset($partido['ganador_inscripcion_id']) && $partido['ganador_
             <p class="muted small">Para un partido normal, cargá los sets y el ganador se calcula solo. En un retiro podés dejar los sets ya jugados.</p>
         </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn--primary">Guardar marcador</button>
-            <a class="btn btn--ghost" href="<?= e($partido['fase'] === 'ELIMINATORIA' ? "/torneos/{$tid}/bracket" : "/torneos/{$tid}/partidos") ?>">Cancelar</a>
+        <div class="form-actions scorekeeper-actions">
+            <button type="submit" class="btn btn--primary scorekeeper-save">Guardar marcador</button>
+            <?php if ($partido['fase'] === 'LIGA'): ?>
+                <button type="submit" name="accion" value="guardar_y_seguir" class="btn btn--ghost">Guardar y seguir</button>
+            <?php endif; ?>
+            <a class="btn btn--ghost" href="<?= e($volver) ?>">Volver a partidos</a>
         </div>
     </form>
 </section>

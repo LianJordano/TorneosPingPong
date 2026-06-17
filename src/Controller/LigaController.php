@@ -102,6 +102,27 @@ final class LigaController extends Controller
         ]);
     }
 
+    /** Redirige el modo anotador al primer partido pendiente de la mesa unica. */
+    public function anotador(array $params): string
+    {
+        if (($guard = $this->requireAnotar()) !== null) {
+            return $guard;
+        }
+        $torneo = $this->torneos->find((int) $params['id']);
+        if ($torneo === null) {
+            return $this->notFound();
+        }
+
+        foreach ($this->partidos->liga((int) $torneo['id']) as $partido) {
+            if ($partido['estado'] !== 'FINALIZADO') {
+                return $this->redirect('/torneos/' . $torneo['id'] . '/partidos/' . $partido['id']);
+            }
+        }
+
+        Session::flash('success', 'No quedan partidos pendientes para anotar.');
+        return $this->redirect('/torneos/' . $torneo['id'] . '/partidos');
+    }
+
     /** Formulario de carga de marcador set por set. */
     public function marcadorForm(array $params): string
     {
@@ -214,6 +235,18 @@ final class LigaController extends Controller
             $antes,
             ['sets' => $setsGuardar, 'ganador' => $ganadorInscripcionId, 'tipo' => $tipo->value, 'estado' => 'FINALIZADO'],
         );
+
+        if ($partido['fase'] === 'LIGA' && Request::post('accion') === 'guardar_y_seguir') {
+            foreach ($this->partidos->liga((int) $torneo['id']) as $siguiente) {
+                if ((int) $siguiente['id'] !== (int) $partido['id'] && $siguiente['estado'] !== 'FINALIZADO') {
+                    Session::flash('success', 'Marcador guardado.');
+                    return $this->redirect('/torneos/' . $torneo['id'] . '/partidos/' . $siguiente['id']);
+                }
+            }
+
+            Session::flash('success', 'Marcador guardado. No quedan partidos pendientes.');
+            return $this->redirect('/torneos/' . $torneo['id'] . '/partidos');
+        }
 
         Session::flash('success', 'Marcador guardado.');
         return $this->redirect($back);
