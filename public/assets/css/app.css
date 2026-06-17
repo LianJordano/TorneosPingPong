@@ -133,6 +133,34 @@ h1, h2, h3, .brand strong {
     font-size: 0.9rem;
 }
 
+/* Hamburguesa y overlay: ocultos en desktop, se activan en mobile (<= 720px). */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+}
+
+.nav-toggle span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    margin: 0 auto;
+    background: #e2e8f0;
+    border-radius: 2px;
+}
+
+.nav-overlay {
+    display: none;
+}
+
 .nav__user-name { font-weight: 600; }
 
 main.container.page-shell {
@@ -2150,12 +2178,21 @@ button.badge { cursor: pointer; }
 
     .topbar { padding: 0.75rem 0; }
 
-    .topbar__inner,
     .page-head,
     .section-head,
     .footer__inner {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    /* La barra superior queda en fila: marca a la izquierda, hamburguesa a la derecha. */
+    .topbar__inner {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .nav-toggle {
+        display: inline-flex;
     }
 
     .brand {
@@ -2165,23 +2202,65 @@ button.badge { cursor: pointer; }
     .brand__mark { width: 2.45rem; height: 2.45rem; border-radius: 13px; }
     .brand small { display: none; }
 
+    /* Menú lateral deslizante (drawer) desde la izquierda. */
     .nav {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        justify-content: stretch;
-        gap: 0.45rem;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 40;
+        height: 100dvh;
+        width: min(82%, 320px);
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 0.4rem;
+        padding: 4.75rem 1.1rem 1.5rem;
+        background: #0b1626;
+        box-shadow: 8px 0 34px rgba(2, 8, 20, 0.5);
+        transform: translateX(-100%);
+        transition: transform 0.28s ease;
+        overflow-y: auto;
+    }
+
+    .nav.is-open {
+        transform: translateX(0);
     }
 
     .nav > a,
     .nav .btn--ghost,
-    .nav__user {
+    .nav__user,
+    #btn-instalar {
         width: 100%;
-        justify-content: center;
-        text-align: center;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .nav__user {
+        order: -1;
+        margin-bottom: 0.5rem;
     }
 
     .nav form.inline { display: block; }
+
+    .nav-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 35;
+        background: rgba(2, 8, 20, 0.6);
+        border: 0;
+    }
+
+    /* Respeta el atributo hidden que togglea el JS (si no, el overlay quedaría siempre visible). */
+    .nav-overlay[hidden] {
+        display: none;
+    }
+
+    body.nav-abierto {
+        overflow: hidden;
+    }
 
     .hero,
     .page-head--hero,

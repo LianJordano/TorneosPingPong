@@ -1,0 +1,24 @@
+# Front controller para Apache.
+# El DocumentRoot del sitio DEBE apuntar a esta carpeta (public/).
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Si el archivo o carpeta existe (CSS, íconos, sw.js, manifest), servirlo tal cual.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Todo lo demás va al front controller.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_mime.c>
+    # MIME correcto para el manifest de la PWA.
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+# Evitar listados de directorio.
+Options -Indexes
+
+DirectoryIndex index.php

@@ -1,10 +1,13 @@
 /* Service Worker — Torneos Ping Pong PWA
  * Requisito para que el navegador ofrezca "Instalar / Agregar a pantalla de inicio".
- * Estrategia: cache-first para assets estáticos, network-first para páginas.
+ *
+ * Estrategia:
+ *  - Imágenes y fuentes: cache-first (rara vez cambian).
+ *  - HTML, CSS y JS: network-first (siempre frescos online; caché solo como respaldo offline).
+ *    OJO: cache-first sobre el CSS deja la pantalla con estilos viejos tras cada deploy.
  */
-const CACHE = 'pingpong-v1';
+const CACHE = 'pingpong-v2';
 const ASSETS = [
-    '/assets/css/app.css',
     '/assets/icons/icon-192.png',
     '/assets/icons/icon-512.png',
 ];
@@ -40,8 +43,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Assets estáticos: cache-first (rápidos y cacheables).
-    if (/\.(css|js|png|jpg|jpeg|svg|ico|woff2?)$/.test(url.pathname)) {
+    // Imágenes y fuentes: cache-first (no cambian seguido).
+    if (/\.(png|jpg|jpeg|svg|ico|woff2?)$/.test(url.pathname)) {
         event.respondWith(
             caches.match(req).then((hit) => hit || fetch(req).then((res) => {
                 const copy = res.clone();
@@ -52,7 +55,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Navegación / HTML: network-first (datos siempre frescos), con caché de respaldo offline.
+    // HTML / CSS / JS: network-first (siempre actualizado), con caché de respaldo offline.
     event.respondWith(
         fetch(req)
             .then((res) => {

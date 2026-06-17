@@ -24,7 +24,7 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/app.css">
+    <link rel="stylesheet" href="/assets/css/app.css?v=<?= e((string) (@filemtime(__DIR__ . '/../public/assets/css/app.css') ?: '1')) ?>">
 </head>
 <body>
     <div class="app-bg app-bg--one"></div>
@@ -41,7 +41,10 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
             </a>
 
             <?php if (!empty($authUser)): ?>
-                <nav class="nav">
+                <button id="nav-toggle" class="nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav-principal">
+                    <span></span><span></span><span></span>
+                </button>
+                <nav class="nav" id="nav-principal">
                     <button id="btn-instalar" class="btn btn--primary btn--sm" type="button" hidden>⬇️ Instalar app</button>
                     <a href="/torneos">Torneos</a>
                     <a href="/ranking">Ranking</a>
@@ -59,6 +62,7 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
                         <button type="submit" class="btn btn--ghost btn--sm">Salir</button>
                     </form>
                 </nav>
+                <div id="nav-overlay" class="nav-overlay" hidden></div>
             <?php endif; ?>
         </div>
     </header>
@@ -125,6 +129,38 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
                 if (btn) {
                     btn.hidden = true;
                 }
+            });
+        })();
+
+        // Menú lateral (drawer) en mobile.
+        (function () {
+            var toggle = document.getElementById('nav-toggle');
+            var nav = document.getElementById('nav-principal');
+            var overlay = document.getElementById('nav-overlay');
+            if (!toggle || !nav) {
+                return;
+            }
+
+            function abrir(estado) {
+                nav.classList.toggle('is-open', estado);
+                toggle.setAttribute('aria-expanded', estado ? 'true' : 'false');
+                document.body.classList.toggle('nav-abierto', estado);
+                if (overlay) {
+                    overlay.hidden = !estado;
+                }
+            }
+
+            toggle.addEventListener('click', function () {
+                abrir(!nav.classList.contains('is-open'));
+            });
+            if (overlay) {
+                overlay.addEventListener('click', function () { abrir(false); });
+            }
+            nav.querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () { abrir(false); });
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') { abrir(false); }
             });
         })();
     </script>
