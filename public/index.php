@@ -28,6 +28,7 @@ use PingPong\Repository\PersonaRepository;
 use PingPong\Repository\PremioRepository;
 use PingPong\Repository\TorneoRepository;
 use PingPong\Repository\UsuarioRepository;
+use PingPong\Service\CargaMasivaJugadoresService;
 use PingPong\Service\RankingHistoricoService;
 use PingPong\Support\Session;
 use PingPong\Support\View;
@@ -61,13 +62,14 @@ $niveles       = new NivelRepository($pdo);
 $estadisticas  = new EstadisticaJugadorRepository($pdo);
 
 $rankingHistorico = new RankingHistoricoService($estadisticas);
+$cargaJugadores   = new CargaMasivaJugadoresService($personas, $areas, $niveles);
 
 $auth        = new AuthController($view, $usuarios);
 $dashboard   = new DashboardController($view, $torneos, $personas);
 $personasCtl = new PersonaController($view, $personas, $areas, $niveles, $rankingHistorico);
 $areasCtl    = new CatalogoController($view, $areas, 'Áreas', 'área', '/areas');
 $nivelesCtl  = new CatalogoController($view, $niveles, 'Niveles', 'nivel', '/niveles');
-$configCtl   = new ConfiguracionController($view, $areas, $niveles);
+$configCtl   = new ConfiguracionController($view, $areas, $niveles, $cargaJugadores);
 $torneosCtl  = new TorneoController($view, $torneos, $inscripciones, $auditoria);
 $inscCtl     = new InscripcionController($view, $torneos, $inscripciones, $personas);
 $ligaCtl     = new LigaController($view, $torneos, $inscripciones, $partidos, $auditoria);
@@ -97,6 +99,8 @@ $router->get('/glosario', static fn (): string => $ayudaCtl->glosario());
 
 // Configuración del sistema
 $router->get('/configuracion', static fn (): string => $configCtl->index());
+$router->get('/configuracion/jugadores/plantilla', static fn (): string => $configCtl->plantillaJugadores());
+$router->post('/configuracion/jugadores/importar', static fn (): string => $configCtl->importarJugadores());
 
 // Personas (jugadores)
 $router->get('/personas',                   static fn (): string => $personasCtl->index());

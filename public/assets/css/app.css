@@ -1566,6 +1566,26 @@ button.badge { cursor: pointer; }
     min-height: 100%;
 }
 
+.settings-card--wide {
+    margin-top: 1rem;
+}
+
+.form-grid--inline {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    margin-top: 0.5rem;
+}
+
+.import-result {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.import-result h3 {
+    margin: 0 0 0.6rem;
+}
+
 .settings-card__eyebrow {
     display: inline-flex;
     align-items: center;

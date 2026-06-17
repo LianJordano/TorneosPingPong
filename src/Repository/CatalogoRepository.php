@@ -54,6 +54,15 @@ abstract class CatalogoRepository
         return $row === false ? null : $row;
     }
 
+    /** Busca por nombre exacto sin distinguir mayúsculas (para find-or-create en carga masiva). @return array<string,mixed>|null */
+    public function findByNombre(string $nombre): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM ' . $this->tabla() . ' WHERE LOWER(nombre) = LOWER(:nombre) LIMIT 1');
+        $stmt->execute([':nombre' => trim($nombre)]);
+        $row = $stmt->fetch();
+        return $row === false ? null : $row;
+    }
+
     public function create(string $nombre): int
     {
         $stmt = $this->db->prepare('INSERT INTO ' . $this->tabla() . ' (nombre) VALUES (:nombre)');

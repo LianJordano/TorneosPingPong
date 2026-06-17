@@ -1,6 +1,8 @@
 <?php
 /** @var int $totalAreas */
 /** @var int $totalNiveles */
+/** @var array{creados:int,actualizados:int,areasCreadas:list<string>,nivelesCreados:list<string>,errores:list<array{fila:int,motivo:string}>,procesadas:int}|null $resultadoCarga */
+$resultadoCarga = $resultadoCarga ?? null;
 ?>
 <section class="page-head page-head--hero">
     <div class="hero-grid">
@@ -48,3 +50,67 @@
         </div>
     </section>
 </div>
+
+<section class="card settings-card settings-card--wide">
+    <span class="settings-card__eyebrow">Carga masiva</span>
+    <h2>Importar jugadores desde Excel</h2>
+    <p class="muted">
+        Subí un archivo <strong>.xlsx</strong> para crear o actualizar jugadores en lote.
+        Las columnas <strong>nombre</strong> y <strong>apellido</strong> son obligatorias; el resto son opcionales.
+        Si la <strong>identificación</strong> ya existe, el jugador se <strong>actualiza</strong>; si no, se <strong>crea</strong>.
+        Las áreas y niveles que no existan se crean automáticamente y se asignan.
+    </p>
+
+    <div class="form-actions">
+        <a class="btn btn--ghost" href="/configuracion/jugadores/plantilla">⬇️ Descargar plantilla</a>
+    </div>
+
+    <form method="post" action="/configuracion/jugadores/importar" enctype="multipart/form-data" class="form-grid form-grid--inline">
+        <?= csrf_field() ?>
+        <label class="field">
+            <span>Archivo Excel (.xlsx)</span>
+            <input type="file" name="archivo" accept=".xlsx,.xls" required>
+        </label>
+        <div class="form-actions">
+            <button type="submit" class="btn btn--primary">Procesar archivo</button>
+        </div>
+    </form>
+
+    <?php if ($resultadoCarga !== null): ?>
+        <div class="import-result">
+            <h3>Resultado de la última carga</h3>
+            <div class="meta-row">
+                <span class="meta-pill meta-pill--light">🟢 <?= e((string) $resultadoCarga['creados']) ?> creados</span>
+                <span class="meta-pill meta-pill--light">🔄 <?= e((string) $resultadoCarga['actualizados']) ?> actualizados</span>
+                <span class="meta-pill meta-pill--light">📋 <?= e((string) $resultadoCarga['procesadas']) ?> filas procesadas</span>
+            </div>
+
+            <?php if ($resultadoCarga['areasCreadas'] !== [] || $resultadoCarga['nivelesCreados'] !== []): ?>
+                <p class="muted small">
+                    <?php if ($resultadoCarga['areasCreadas'] !== []): ?>
+                        Áreas nuevas: <?= e(implode(', ', $resultadoCarga['areasCreadas'])) ?>.
+                    <?php endif; ?>
+                    <?php if ($resultadoCarga['nivelesCreados'] !== []): ?>
+                        Niveles nuevos: <?= e(implode(', ', $resultadoCarga['nivelesCreados'])) ?>.
+                    <?php endif; ?>
+                </p>
+            <?php endif; ?>
+
+            <?php if ($resultadoCarga['errores'] !== []): ?>
+                <table class="table">
+                    <thead>
+                        <tr><th>Fila</th><th>Problema</th></tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($resultadoCarga['errores'] as $error): ?>
+                        <tr>
+                            <td><?= e((string) $error['fila']) ?></td>
+                            <td><?= e($error['motivo']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+</section>

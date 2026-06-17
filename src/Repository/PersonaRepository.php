@@ -94,6 +94,15 @@ final class PersonaRepository
         return $row === false ? null : $row;
     }
 
+    /** Busca una persona por su identificador interno (clave de upsert en carga masiva). @return array<string,mixed>|null */
+    public function findByIdentificador(string $identificador): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM persona WHERE identificador_interno = :ident LIMIT 1');
+        $stmt->execute([':ident' => $identificador]);
+        $row = $stmt->fetch();
+        return $row === false ? null : $row;
+    }
+
     /** @param array<string,mixed> $data */
     public function create(array $data): int
     {
