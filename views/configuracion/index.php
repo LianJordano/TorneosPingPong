@@ -49,6 +49,18 @@ $resultadoCarga = $resultadoCarga ?? null;
             <a class="btn btn--primary" href="/niveles">Administrar niveles</a>
         </div>
     </section>
+
+    <section class="card settings-card">
+        <span class="settings-card__eyebrow">Seguridad</span>
+        <h2>Usuarios y roles</h2>
+        <p class="muted">Asigná roles (Administrador, Anotador, Espectador) y revisá qué puede hacer cada uno.</p>
+        <div class="meta-row">
+            <span class="meta-pill meta-pill--light">🔐 Control de acceso</span>
+        </div>
+        <div class="form-actions">
+            <a class="btn btn--primary" href="/configuracion/usuarios">Gestionar usuarios</a>
+        </div>
+    </section>
 </div>
 
 <section class="card settings-card settings-card--wide">

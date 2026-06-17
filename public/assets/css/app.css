@@ -1586,6 +1586,32 @@ button.badge { cursor: pointer; }
     margin: 0 0 0.6rem;
 }
 
+.rol-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rol-glosario {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.rol-glosario__item {
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.rol-glosario__item h3 {
+    margin: 0 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .settings-card__eyebrow {
     display: inline-flex;
     align-items: center;

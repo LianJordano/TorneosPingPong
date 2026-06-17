@@ -16,6 +16,7 @@ use PingPong\Controller\PremioController;
 use PingPong\Controller\PublicoController;
 use PingPong\Controller\RankingController;
 use PingPong\Controller\TorneoController;
+use PingPong\Controller\UsuarioController;
 use PingPong\Database\Connection;
 use PingPong\Http\Router;
 use PingPong\Repository\AreaRepository;
@@ -79,6 +80,7 @@ $publicoCtl  = new PublicoController($view, $torneos, $inscripciones, $partidos)
 $auditCtl    = new AuditoriaController($view, $torneos, $auditoria);
 $ayudaCtl    = new AyudaController($view);
 $rankingCtl  = new RankingController($view, $rankingHistorico);
+$usuariosCtl = new UsuarioController($view, $usuarios);
 
 // --- Rutas ---
 $router = new Router();
@@ -101,6 +103,8 @@ $router->get('/glosario', static fn (): string => $ayudaCtl->glosario());
 $router->get('/configuracion', static fn (): string => $configCtl->index());
 $router->get('/configuracion/jugadores/plantilla', static fn (): string => $configCtl->plantillaJugadores());
 $router->post('/configuracion/jugadores/importar', static fn (): string => $configCtl->importarJugadores());
+$router->get('/configuracion/usuarios', static fn (): string => $usuariosCtl->index());
+$router->post('/configuracion/usuarios/{id}/rol', static fn (array $p): string => $usuariosCtl->actualizarRol($p));
 
 // Personas (jugadores)
 $router->get('/personas',                   static fn (): string => $personasCtl->index());
