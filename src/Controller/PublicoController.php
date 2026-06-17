@@ -68,14 +68,17 @@ final class PublicoController extends Controller
             }
         }
 
-        // Próximos partidos (pendientes con ambos jugadores definidos)
+        // Próximos partidos (pendientes con ambos jugadores definidos).
+        // La vista muestra una cola corta para proyección, pero contamos todos
+        // los pendientes porque los marcadores pueden cargarse fuera de orden.
         $proximos = [];
+        $totalPendientes = 0;
         foreach (array_merge($this->partidos->liga($id), $bracketRaw) as $p) {
             if ($p['estado'] === 'PENDIENTE' && $p['inscripcion_a_id'] !== null && $p['inscripcion_b_id'] !== null) {
-                $proximos[] = $p;
-            }
-            if (count($proximos) >= 10) {
-                break;
+                $totalPendientes++;
+                if (count($proximos) < 4) {
+                    $proximos[] = $p;
+                }
             }
         }
 
@@ -93,6 +96,7 @@ final class PublicoController extends Controller
             'totalRondas' => $totalRondas,
             'campeon'     => $campeon,
             'proximos'    => $proximos,
+            'totalPendientes' => $totalPendientes,
             'clasificados' => (int) $torneo['num_clasificados'],
         ]);
     }
