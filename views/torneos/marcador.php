@@ -6,10 +6,12 @@
 /** @var list<string> $errores */
 /** @var list<\PingPong\Domain\TipoResultado> $tipos */
 /** @var string $tipoActual */
+/** @var ?array{actual:int,total:int,pendientes:int} $progreso */
 $tid = (string) $torneo['id'];
 $maxSets = $reglas->formatoSets;
 $filas = max($maxSets, count($sets));
 $tipoActual = $tipoActual ?? 'NORMAL';
+$progreso = $progreso ?? null;
 $ganadorActual = isset($partido['ganador_inscripcion_id']) && $partido['ganador_inscripcion_id'] !== null
     ? ((int) $partido['ganador_inscripcion_id'] === (int) $partido['inscripcion_a_id'] ? 'A' : 'B')
     : '';
@@ -30,12 +32,18 @@ $volver = $partido['fase'] === 'ELIMINATORIA' ? "/torneos/{$tid}/bracket" : "/to
                 <span class="meta-pill"><?= e($partido['fase']) ?></span>
                 <span class="meta-pill"><?= $maxSets === 1 ? '1 set' : 'Mejor de ' . e((string) $maxSets) ?></span>
             </div>
+            <?php if ($progreso !== null): ?>
+                <div class="scorekeeper-progress" aria-label="Progreso de partidos de liga">
+                    <span>Partido <strong><?= e((string) $progreso['actual']) ?></strong> de <strong><?= e((string) $progreso['total']) ?></strong></span>
+                    <span>Quedan <strong><?= e((string) $progreso['pendientes']) ?></strong> pendiente<?= $progreso['pendientes'] === 1 ? '' : 's' ?></span>
+                </div>
+            <?php endif; ?>
         </div>
         <div class="hero-side">
             <div class="hero-card scorekeeper-context">
                 <span class="hero-card__label">Anotacion rapida</span>
                 <strong>Set por set</strong>
-                <small>Guardas y volves a la lista para seguir con el proximo partido.</small>
+                <small><?= $partido['fase'] === 'LIGA' ? 'Guardas y saltas directo al proximo pendiente.' : 'Guardas y volves al cuadro para seguir la eliminatoria.' ?></small>
             </div>
             <div class="actions"><a class="btn btn--ghost btn--sm" href="<?= e($volver) ?>">Volver a partidos</a></div>
         </div>

@@ -153,6 +153,7 @@ final class LigaController extends Controller
             'errores'    => $errores,
             'tipos'      => TipoResultado::casos(),
             'tipoActual' => $tipoActual,
+            'progreso'   => $this->progresoMarcador($torneo, $partido),
         ]);
     }
 
@@ -399,6 +400,35 @@ final class LigaController extends Controller
     {
         $seccion = $partido['fase'] === 'ELIMINATORIA' ? 'bracket' : 'partidos';
         return '/torneos/' . $torneo['id'] . '/' . $seccion;
+    }
+
+    /**
+     * @param array<string,mixed> $torneo
+     * @param array<string,mixed> $partido
+     * @return array{actual:int,total:int,pendientes:int}|null
+     */
+    private function progresoMarcador(array $torneo, array $partido): ?array
+    {
+        if ($partido['fase'] !== 'LIGA') {
+            return null;
+        }
+
+        $liga = $this->partidos->liga((int) $torneo['id']);
+        $total = count($liga);
+        $actual = 0;
+        $pendientes = 0;
+
+        foreach ($liga as $i => $p) {
+            if ((int) $p['id'] === (int) $partido['id']) {
+                $actual = $i + 1;
+                continue;
+            }
+            if ($p['estado'] !== 'FINALIZADO') {
+                $pendientes++;
+            }
+        }
+
+        return $actual > 0 ? ['actual' => $actual, 'total' => $total, 'pendientes' => $pendientes] : null;
     }
 
     /**

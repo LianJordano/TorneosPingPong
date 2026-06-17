@@ -30,19 +30,19 @@ $resumen = static function (array $p): array {
 <section class="page-head page-head--hero">
     <div class="hero-grid">
         <div>
-            <span class="eyebrow">Championship bracket</span>
-            <h1><?= e($torneo['nombre']) ?> · Bracket</h1>
-            <p class="muted">Eliminación directa con lectura mucho más épica y lista para proyectar.</p>
+            <span class="eyebrow">La Champions de la mesa</span>
+            <h1><?= e($torneo['nombre']) ?> · Camino al campeón</h1>
+            <p class="muted">Acá entran los maestros: eliminación directa, nervio de final y cada partido con peso de consagración.</p>
             <div class="meta-row">
-                <span class="meta-pill">🎯 <?= e((string) $totalRondas) ?> ronda<?= $totalRondas === 1 ? '' : 's' ?></span>
-                <span class="meta-pill">🏆 <?= $campeon !== null ? 'Final definida' : 'Campeonato en juego' ?></span>
+                <span class="meta-pill">Camino de <?= e((string) $totalRondas) ?> ronda<?= $totalRondas === 1 ? '' : 's' ?></span>
+                <span class="meta-pill"><?= $campeon !== null ? 'Campeón en la historia' : 'Trono en disputa' ?></span>
             </div>
         </div>
         <div class="hero-side">
-            <div class="hero-card">
-                <span class="hero-card__label">Estado del cuadro</span>
-                <strong><?= $campeon !== null ? 'Listo para consagrar' : 'En competencia' ?></strong>
-                <small><?= $finalizado ? 'El campeón ya quedó oficializado.' : 'Seguimiento visual de cada ronda y final.' ?></small>
+            <div class="hero-card bracket-hero-card">
+                <span class="hero-card__label">Zona de grandes</span>
+                <strong><?= $campeon !== null ? e($campeon) : 'Los maestros en carrera' ?></strong>
+                <small><?= $finalizado ? 'Campeón oficial. El cuadro ya tiene dueño.' : 'Cada cruce acerca a la gloria del torneo.' ?></small>
             </div>
             <div class="actions no-print">
                 <a class="btn btn--sm" href="/torneos/<?= e($tid) ?>/tabla">🏆 Tabla</a>
@@ -79,8 +79,8 @@ $resumen = static function (array $p): array {
                 $r = $fin ? $resumen($p) : null;
                 $esFinal = $ronda === $totalRondas;
                 ?>
-                <div class="bracket__match <?= $esFinal ? 'bracket__match--final' : '' ?>">
-                    <?php if ($esFinal): ?><div class="bracket__final-tag">🏆 Final</div><?php endif; ?>
+                <div class="bracket__match <?= $esFinal ? 'bracket__match--final' : '' ?> <?= $esFinal && $fin ? 'bracket__match--crowned' : '' ?>">
+                    <?php if ($esFinal): ?><div class="bracket__final-tag"><?= $fin ? 'Final consagrada' : 'La gran final' ?></div><?php endif; ?>
                     <div class="bm-row <?= $ganaA ? 'bm-win' : '' ?>">
                         <span><?= e($p['a_label'] ?? ($bye ? '—' : '(por definir)')) ?></span>
                         <?php if ($fin && !$bye): ?><b class="bm-sets"><?= e((string) $r['sa']) ?></b><?php endif; ?>
@@ -111,11 +111,11 @@ $resumen = static function (array $p): array {
 <?php if ($campeon !== null): ?>
     <section class="consagracion <?= $finalizado ? 'consagracion--oficial' : '' ?>">
         <div class="consagracion__trofeo">🏆</div>
-        <div class="consagracion__label"><?= $finalizado ? 'Campeón del torneo' : 'Campeón (a confirmar)' ?></div>
+        <div class="consagracion__label"><?= $finalizado ? 'Maestro campeón del torneo' : 'Campeón épico (a confirmar)' ?></div>
         <div class="consagracion__nombre"><?= e($campeon) ?></div>
         <?php if ($subcampeon !== null): ?>
-            <div class="consagracion__sub">🥈 Subcampeón: <strong><?= e($subcampeon) ?></strong></div>
+            <div class="consagracion__sub">Subcampeón de lujo: <strong><?= e($subcampeon) ?></strong></div>
         <?php endif; ?>
-        <a class="btn btn--sm no-print" href="/torneos/<?= e($tid) ?>/podio">Ver podio completo →</a>
+        <a class="btn btn--sm no-print" href="/torneos/<?= e($tid) ?>/podio">Ver podio completo</a>
     </section>
 <?php endif; ?>
