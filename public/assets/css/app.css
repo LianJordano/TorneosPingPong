@@ -1759,6 +1759,281 @@ button.badge { cursor: pointer; }
 .footer__inner p { margin: 0.25rem 0 0; }
 .footer__meta { display: flex; gap: 0.9rem; flex-wrap: wrap; font-size: 0.88rem; }
 
+/* ---------- Historical ranking / player profile ---------- */
+.ranking-hero,
+.profile-hero {
+    align-items: stretch;
+}
+
+.ranking-hero__champion,
+.profile-rank-card {
+    min-width: 260px;
+    display: grid;
+    align-content: center;
+    gap: 0.4rem;
+    padding: 1.15rem 1.25rem;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(14px);
+}
+
+.ranking-hero__champion strong,
+.profile-rank-card strong {
+    color: #fff;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1;
+}
+
+.ranking-hero__champion span:last-child,
+.profile-rank-card span:last-child {
+    color: rgba(226, 232, 240, 0.82);
+}
+
+.ranking-filter-form {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(150px, 1fr)) auto;
+    gap: 0.85rem;
+    align-items: end;
+}
+
+.ranking-filter-form .field {
+    margin-bottom: 0;
+}
+
+.ranking-filter-form__actions {
+    display: flex;
+    align-items: end;
+}
+
+.filter-summary {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.table--ranking th,
+.table--ranking td {
+    white-space: nowrap;
+}
+
+.table--ranking td:nth-child(2) {
+    min-width: 220px;
+    white-space: normal;
+}
+
+.rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    padding: 0.42rem 0.65rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #334155;
+    font-weight: 900;
+}
+
+.rank-row--1 .rank-badge {
+    background: linear-gradient(135deg, #facc15, #f97316);
+    color: #3b2400;
+    box-shadow: 0 10px 22px rgba(234, 179, 8, 0.24);
+}
+
+.rank-row--2 .rank-badge { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #172033; }
+.rank-row--3 .rank-badge { background: linear-gradient(135deg, #fdba74, #c2410c); color: #fff7ed; }
+
+.ranking-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.ranking-toolbar__count {
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.per-page {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.per-page__label {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-right: 0.25rem;
+}
+
+.per-page__opt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.per-page__opt:hover { border-color: #94a3b8; }
+
+.per-page__opt.is-active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    margin-top: 1.25rem;
+}
+
+.pagination__btn,
+.pagination__page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pagination__btn:hover,
+.pagination__page:hover { border-color: #94a3b8; }
+
+.pagination__page.is-active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    cursor: default;
+}
+
+.pagination__btn.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.pagination__gap {
+    padding: 0 0.25rem;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.metric-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+}
+
+.metric-list > div,
+.split-card,
+.partner-list a {
+    padding: 0.95rem 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(147, 197, 253, 0.22);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(239, 246, 255, 0.9));
+}
+
+.metric-list span,
+.split-card span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.metric-list strong,
+.split-card strong {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 1.35rem;
+    color: var(--text);
+}
+
+.split-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.split-card--purple {
+    border-color: rgba(124, 58, 237, 0.18);
+    background: linear-gradient(180deg, rgba(245, 243, 255, 0.98), rgba(237, 233, 254, 0.88));
+}
+
+.split-card small {
+    color: var(--muted);
+}
+
+.mini-title {
+    margin: 1.1rem 0 0.65rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.partner-list {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.partner-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.partner-list a:hover {
+    border-color: rgba(37, 99, 235, 0.28);
+    box-shadow: var(--shadow-soft);
+}
+
+.partner-list span {
+    color: var(--muted);
+    white-space: nowrap;
+}
+
 /* ---------- Impresión (PDF vía navegador) ---------- */
 @media print {
     .topbar, .footer, .no-print, .liga-nav, .app-bg { display: none !important; }
@@ -1807,8 +2082,15 @@ button.badge { cursor: pointer; }
     .settings-grid,
     .glossary-grid,
     .glossary-hero-stats,
-    .ops-grid {
+    .ops-grid,
+    .ranking-filter-form,
+    .profile-grid {
         grid-template-columns: 1fr;
+    }
+
+    .ranking-hero__champion,
+    .profile-rank-card {
+        min-width: 0;
     }
 
     .auth__card {
@@ -1886,6 +2168,7 @@ button.badge { cursor: pointer; }
 
     .actions .btn,
     .form-actions .btn,
+    .ranking-filter-form .btn,
     .inline-form .btn,
     .inline-form select,
     .inline-form input {
@@ -1965,5 +2248,10 @@ button.badge { cursor: pointer; }
         width: 100%;
         min-width: 0;
         font-size: 1.6rem;
+    }
+
+    .metric-list,
+    .split-cards {
+        grid-template-columns: 1fr;
     }
 }

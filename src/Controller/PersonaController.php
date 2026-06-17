@@ -8,6 +8,7 @@ use PingPong\Http\Controller;
 use PingPong\Repository\AreaRepository;
 use PingPong\Repository\NivelRepository;
 use PingPong\Repository\PersonaRepository;
+use PingPong\Service\RankingHistoricoService;
 use PingPong\Support\Request;
 use PingPong\Support\Session;
 use PingPong\Support\Validator;
@@ -22,6 +23,7 @@ final class PersonaController extends Controller
         private PersonaRepository $personas,
         private AreaRepository $areas,
         private NivelRepository $niveles,
+        private RankingHistoricoService $ranking,
     ) {
         parent::__construct($view);
     }
@@ -75,6 +77,24 @@ final class PersonaController extends Controller
             return $guard;
         }
         return $this->renderForm('Nuevo jugador', null, '/personas');
+    }
+
+    /** @param array<string,string> $params */
+    public function show(array $params): string
+    {
+        if (($guard = $this->requireAuth()) !== null) {
+            return $guard;
+        }
+
+        $perfil = $this->ranking->perfil((int) $params['id']);
+        if ($perfil === null) {
+            return $this->notFound();
+        }
+
+        return $this->render('personas/show', [
+            'title' => 'Perfil · ' . $perfil['persona']['nombre_completo'],
+            'perfil' => $perfil,
+        ]);
     }
 
     public function store(): string

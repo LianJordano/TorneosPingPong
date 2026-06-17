@@ -32,6 +32,7 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
             <?php if (!empty($authUser)): ?>
                 <nav class="nav">
                     <a href="/torneos">Torneos</a>
+                    <a href="/ranking">Ranking</a>
                     <a href="/personas">Jugadores</a>
                     <?php if ($puedeGestionar): ?>
                         <a href="/configuracion">Configuración</a>

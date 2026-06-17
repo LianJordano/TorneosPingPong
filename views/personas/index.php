@@ -82,7 +82,7 @@ $th = static function (string $col, string $etiqueta) use ($q, $incluirInactivas
                 <tbody>
                 <?php foreach ($personas as $p): ?>
                     <tr class="<?= (int) $p['activo'] === 1 ? '' : 'row--muted' ?>">
-                        <td><strong><?= e($p['apellido']) ?>, <?= e($p['nombre']) ?></strong></td>
+                        <td><strong><a href="/personas/<?= e((string) $p['id']) ?>"><?= e($p['apellido']) ?>, <?= e($p['nombre']) ?></a></strong></td>
                         <td><?= e($p['area'] ?? '—') ?></td>
                         <td><?= e($p['nivel'] ?? '—') ?></td>
                         <td><?= e($p['identificador_interno'] ?? '—') ?></td>

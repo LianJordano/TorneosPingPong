@@ -14,11 +14,13 @@ use PingPong\Controller\LigaController;
 use PingPong\Controller\PersonaController;
 use PingPong\Controller\PremioController;
 use PingPong\Controller\PublicoController;
+use PingPong\Controller\RankingController;
 use PingPong\Controller\TorneoController;
 use PingPong\Database\Connection;
 use PingPong\Http\Router;
 use PingPong\Repository\AreaRepository;
 use PingPong\Repository\AuditoriaRepository;
+use PingPong\Repository\EstadisticaJugadorRepository;
 use PingPong\Repository\InscripcionRepository;
 use PingPong\Repository\NivelRepository;
 use PingPong\Repository\PartidoRepository;
@@ -26,6 +28,7 @@ use PingPong\Repository\PersonaRepository;
 use PingPong\Repository\PremioRepository;
 use PingPong\Repository\TorneoRepository;
 use PingPong\Repository\UsuarioRepository;
+use PingPong\Service\RankingHistoricoService;
 use PingPong\Support\Session;
 use PingPong\Support\View;
 
@@ -55,10 +58,13 @@ $premios       = new PremioRepository($pdo);
 $auditoria     = new AuditoriaRepository($pdo);
 $areas         = new AreaRepository($pdo);
 $niveles       = new NivelRepository($pdo);
+$estadisticas  = new EstadisticaJugadorRepository($pdo);
+
+$rankingHistorico = new RankingHistoricoService($estadisticas);
 
 $auth        = new AuthController($view, $usuarios);
 $dashboard   = new DashboardController($view, $torneos, $personas);
-$personasCtl = new PersonaController($view, $personas, $areas, $niveles);
+$personasCtl = new PersonaController($view, $personas, $areas, $niveles, $rankingHistorico);
 $areasCtl    = new CatalogoController($view, $areas, 'Áreas', 'área', '/areas');
 $nivelesCtl  = new CatalogoController($view, $niveles, 'Niveles', 'nivel', '/niveles');
 $configCtl   = new ConfiguracionController($view, $areas, $niveles);
@@ -70,6 +76,7 @@ $premioCtl   = new PremioController($view, $torneos, $premios, $inscripciones, $
 $publicoCtl  = new PublicoController($view, $torneos, $inscripciones, $partidos);
 $auditCtl    = new AuditoriaController($view, $torneos, $auditoria);
 $ayudaCtl    = new AyudaController($view);
+$rankingCtl  = new RankingController($view, $rankingHistorico);
 
 // --- Rutas ---
 $router = new Router();
@@ -82,6 +89,9 @@ $router->post('/logout', static fn (): string => $auth->logout());
 // Panel
 $router->get('/', static fn (): string => $dashboard->index());
 
+// Ranking historico
+$router->get('/ranking', static fn (): string => $rankingCtl->index());
+
 // Glosario / ayuda
 $router->get('/glosario', static fn (): string => $ayudaCtl->glosario());
 
@@ -91,6 +101,7 @@ $router->get('/configuracion', static fn (): string => $configCtl->index());
 // Personas (jugadores)
 $router->get('/personas',                   static fn (): string => $personasCtl->index());
 $router->get('/personas/nueva',             static fn (): string => $personasCtl->create());
+$router->get('/personas/{id}',              static fn (array $p): string => $personasCtl->show($p));
 $router->post('/personas',                  static fn (): string => $personasCtl->store());
 $router->get('/personas/{id}/editar',       static fn (array $p): string => $personasCtl->edit($p));
 $router->post('/personas/{id}',             static fn (array $p): string => $personasCtl->update($p));
