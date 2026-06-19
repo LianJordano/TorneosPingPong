@@ -700,6 +700,62 @@ button.badge { cursor: pointer; }
 .inline-form select { min-width: 240px; }
 .inline-form input { min-width: 240px; }
 
+/* Inscripción múltiple con Tom Select: ajustes para integrar el widget al theme. */
+.inscribir-form { margin-bottom: 1rem; }
+.inscribir-form__acciones { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.6rem; }
+
+/* El <select> nativo queda oculto cuando Tom Select ya montó (.tomselected). */
+.ts-wrapper { min-width: 280px; }
+
+.ts-control {
+    border: 1px solid rgba(148, 163, 184, 0.28) !important;
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    padding: 0.4rem 0.55rem !important;
+    font: inherit;
+    min-height: 48px;
+    gap: 0.35rem;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.ts-wrapper.focus .ts-control,
+.ts-control:hover {
+    border-color: rgba(37, 99, 235, 0.5) !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12) !important;
+}
+
+/* Chips de seleccionados. */
+.ts-control .item {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.3rem 0.2rem 0.65rem !important;
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.14), rgba(37, 99, 235, 0.08)) !important;
+    border: 1px solid rgba(37, 99, 235, 0.25) !important;
+    border-radius: 999px !important;
+    color: #1e3a8a !important;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+.ts-control .item .remove {
+    border: 0 !important;
+    color: #1e3a8a !important;
+    padding: 0 0.25rem !important;
+    border-radius: 50%;
+}
+.ts-control .item .remove:hover { background: rgba(37, 99, 235, 0.22) !important; }
+
+/* Panel desplegable. */
+.ts-dropdown {
+    border: 1px solid rgba(148, 163, 184, 0.28) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 18px 40px -16px rgba(15, 23, 42, 0.35) !important;
+    overflow: hidden;
+    margin-top: 6px;
+}
+.ts-dropdown .option { padding: 0.55rem 0.75rem; font-size: 0.92rem; }
+.ts-dropdown .option.active { background: rgba(37, 99, 235, 0.1); color: #1e3a8a; }
+.ts-dropdown .no-results { padding: 0.6rem 0.75rem; color: var(--muted); font-size: 0.9rem; }
+
 .form-panel {
     padding: 1.15rem;
     border-radius: 18px;

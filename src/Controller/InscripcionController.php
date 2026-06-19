@@ -50,49 +50,100 @@ final class InscripcionController extends Controller
         $emparejamiento = Emparejamiento::from($torneo['emparejamiento']);
 
         // En dobles con parejas MANUALES se inscriben dos personas a la vez.
-        // En individual, o en dobles con sorteo ALEATORIO, se inscribe de a una.
+        // En individual, o en dobles con sorteo ALEATORIO, se inscribe de a una
+        // (y se permite inscribir varias de un saque para agilizar la carga).
         $esParejaManual = $modalidad->esDobles() && !$emparejamiento->esAleatorio();
 
+        return $esParejaManual
+            ? $this->inscribirPareja($torneoId, $back)
+            : $this->inscribirIndividuales($torneoId, $back);
+    }
+
+    /** Inscribe una pareja manual (dos integrantes elegidos a mano). */
+    private function inscribirPareja(int $torneoId, string $back): string
+    {
         $persona = $this->personaValida(Request::postInt('persona_id'));
         if ($persona === null) {
             Session::flash('error', 'Seleccioná un jugador válido.');
             return $this->redirect($back);
         }
 
-        $compañero = null;
-        if ($esParejaManual) {
-            $compañero = $this->personaValida(Request::postInt('persona_id_2'));
-            if ($compañero === null) {
-                Session::flash('error', 'En dobles tenés que elegir los DOS integrantes de la pareja.');
-                return $this->redirect($back);
-            }
-            if ((int) $compañero['id'] === (int) $persona['id']) {
-                Session::flash('error', 'Una pareja no puede ser la misma persona dos veces.');
-                return $this->redirect($back);
-            }
-            if ($this->inscripciones->personaYaInscrita($torneoId, (int) $compañero['id'])) {
-                Session::flash('error', $compañero['nombre'] . ' ' . $compañero['apellido'] . ' ya está inscrito/a.');
-                return $this->redirect($back);
-            }
+        $compañero = $this->personaValida(Request::postInt('persona_id_2'));
+        if ($compañero === null) {
+            Session::flash('error', 'En dobles tenés que elegir los DOS integrantes de la pareja.');
+            return $this->redirect($back);
         }
-
+        if ((int) $compañero['id'] === (int) $persona['id']) {
+            Session::flash('error', 'Una pareja no puede ser la misma persona dos veces.');
+            return $this->redirect($back);
+        }
+        if ($this->inscripciones->personaYaInscrita($torneoId, (int) $compañero['id'])) {
+            Session::flash('error', $compañero['nombre'] . ' ' . $compañero['apellido'] . ' ya está inscrito/a.');
+            return $this->redirect($back);
+        }
         if ($this->inscripciones->personaYaInscrita($torneoId, (int) $persona['id'])) {
             Session::flash('error', $persona['nombre'] . ' ' . $persona['apellido'] . ' ya está inscrito/a.');
             return $this->redirect($back);
         }
 
         try {
-            $this->inscripciones->inscribir(
-                $torneoId,
-                (int) $persona['id'],
-                $compañero !== null ? (int) $compañero['id'] : null,
-            );
-            $etiqueta = $compañero !== null
-                ? $persona['apellido'] . ' / ' . $compañero['apellido'] . ' inscritos/as.'
-                : $persona['nombre'] . ' ' . $persona['apellido'] . ' inscrito/a.';
-            Session::flash('success', $etiqueta);
+            $this->inscripciones->inscribir($torneoId, (int) $persona['id'], (int) $compañero['id']);
+            Session::flash('success', $persona['apellido'] . ' / ' . $compañero['apellido'] . ' inscritos/as.');
         } catch (\PDOException $e) {
             Session::flash('error', 'No se pudo inscribir: ya participa en el torneo.');
+        }
+
+        return $this->redirect($back);
+    }
+
+    /**
+     * Inscribe uno o varios jugadores individuales en lote. Acepta tanto el
+     * campo array `persona_ids[]` (selección múltiple) como el legacy
+     * `persona_id` (un solo jugador). Omite en silencio los inválidos/inactivos
+     * y reporta los que ya estaban inscritos.
+     */
+    private function inscribirIndividuales(int $torneoId, string $back): string
+    {
+        $ids = Request::postIntArray('persona_ids');
+        if ($ids === [] && ($uno = Request::postInt('persona_id')) !== null) {
+            $ids = [$uno];
+        }
+        $ids = array_values(array_unique($ids));
+
+        if ($ids === []) {
+            Session::flash('error', 'Seleccioná al menos un jugador.');
+            return $this->redirect($back);
+        }
+
+        $inscritos = 0;
+        $yaInscritos = [];
+        foreach ($ids as $id) {
+            $persona = $this->personaValida($id);
+            if ($persona === null) {
+                continue; // inexistente o inactivo: lo ignoramos
+            }
+            if ($this->inscripciones->personaYaInscrita($torneoId, $id)) {
+                $yaInscritos[] = $persona['apellido'] . ', ' . $persona['nombre'];
+                continue;
+            }
+            try {
+                $this->inscripciones->inscribir($torneoId, $id);
+                $inscritos++;
+            } catch (\PDOException $e) {
+                $yaInscritos[] = $persona['apellido'] . ', ' . $persona['nombre'];
+            }
+        }
+
+        if ($inscritos > 0) {
+            Session::flash('success', $inscritos === 1
+                ? '1 jugador inscrito.'
+                : $inscritos . ' jugadores inscritos.');
+        }
+        if ($yaInscritos !== []) {
+            Session::flash('error', 'Ya estaban inscritos: ' . implode('; ', $yaInscritos) . '.');
+        }
+        if ($inscritos === 0 && $yaInscritos === []) {
+            Session::flash('error', 'No se inscribió a nadie: la selección no era válida.');
         }
 
         return $this->redirect($back);

@@ -86,8 +86,20 @@ final class TorneoRepository
 
     public function delete(int $id): void
     {
-        $stmt = $this->db->prepare('DELETE FROM torneo WHERE id = :id');
-        $stmt->execute([':id' => $id]);
+        $this->db->beginTransaction();
+        try {
+            // Los partidos referencian inscripciones con ON DELETE RESTRICT, así que
+            // hay que borrarlos ANTES: si dejamos que el cascade del torneo borre las
+            // inscripciones, los partidos las seguirían apuntando y MySQL rechaza el
+            // borrado (error 1451). partido_set cae por cascade al borrar el partido.
+            $this->db->prepare('DELETE FROM partido WHERE torneo_id = :id')->execute([':id' => $id]);
+            // El resto (inscripcion, premio_config) cae por ON DELETE CASCADE del torneo.
+            $this->db->prepare('DELETE FROM torneo WHERE id = :id')->execute([':id' => $id]);
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
     /** Duplica configuración y premios en un nuevo torneo en BORRADOR. */

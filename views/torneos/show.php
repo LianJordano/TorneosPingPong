@@ -144,14 +144,24 @@ $enLigaOmas = in_array($estado, [\PingPong\Domain\EstadoTorneo::FASE_LIGA, \Ping
                 </form>
                 <p class="hint">Elegí los DOS integrantes de la pareja.</p>
             <?php else: ?>
-                <form method="post" action="/torneos/<?= e($tid) ?>/inscripciones" class="inline-form">
+                <form method="post" action="/torneos/<?= e($tid) ?>/inscripciones" class="inscribir-form" data-pick>
                     <?= csrf_field() ?>
-                    <select name="persona_id" required><?= $opcionesPersona($disponibles, '— Elegí un jugador —') ?></select>
-                    <button class="btn btn--primary btn--sm" type="submit">Inscribir</button>
+                    <select name="persona_ids[]" multiple data-ts placeholder="Buscá y elegí jugadores…" autocomplete="off">
+                        <?php foreach ($disponibles as $d): ?>
+                            <?php $area = !empty($d['area']) ? ' (' . $d['area'] . ')' : ''; ?>
+                            <option value="<?= e((string) $d['id']) ?>"><?= e($d['apellido'] . ', ' . $d['nombre'] . $area) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="inscribir-form__acciones">
+                        <button class="btn btn--ghost btn--sm" type="button" data-ts-all>Seleccionar todos</button>
+                        <button class="btn btn--ghost btn--sm" type="button" data-ts-none hidden>Limpiar</button>
+                        <button class="btn btn--primary btn--sm" type="submit" data-ts-submit>Inscribir seleccionados</button>
+                    </div>
                 </form>
-                <?php if ($esParejaAleatoria): ?>
-                    <p class="hint">Inscribí jugadores individuales. Las parejas se sortean al cerrar la inscripción.</p>
-                <?php endif; ?>
+                <p class="hint">
+                    Buscá y marcá uno, varios o <strong>todos</strong> los jugadores, y inscribilos de un saque.
+                    <?php if ($esParejaAleatoria): ?>Las parejas se sortean al cerrar la inscripción.<?php endif; ?>
+                </p>
             <?php endif; ?>
         <?php elseif ($puedeGestionar): ?>
             <p class="hint">Las inscripciones están <strong>cerradas</strong> en el estado actual.</p>
@@ -207,3 +217,57 @@ $enLigaOmas = in_array($estado, [\PingPong\Domain\EstadoTorneo::FASE_LIGA, \Ping
         <?php endif; ?>
     </section>
 </div>
+
+<?php if ($puedeGestionar && $estado->permiteInscripciones() && !$esParejaManual && $disponibles !== []): ?>
+<!-- Tom Select: multiselect con chips/buscador. Se carga sólo en esta vista. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.min.css">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+<script>
+// Inscripción múltiple con Tom Select. El <select multiple name="persona_ids[]">
+// es la fuente de verdad; Tom Select sólo lo embellece. Si el script no carga
+// (offline / CDN caído), queda el <select> nativo y la inscripción funciona igual.
+(function () {
+    var el = document.querySelector('[data-ts]');
+    if (!el || typeof TomSelect === 'undefined') return;
+
+    var form   = el.closest('form');
+    var submit = form.querySelector('[data-ts-submit]');
+    var btnAll = form.querySelector('[data-ts-all]');
+    var btnNone = form.querySelector('[data-ts-none]');
+    var base   = submit.textContent;
+
+    var ts = new TomSelect(el, {
+        plugins: ['remove_button'],
+        maxItems: null,
+        hideSelected: true,
+        closeAfterSelect: false,
+        placeholder: el.getAttribute('placeholder'),
+        sortField: { field: 'text', direction: 'asc' },
+        render: {
+            no_results: function () { return '<div class="no-results">Sin coincidencias.</div>'; }
+        }
+    });
+
+    function refresh() {
+        var n = ts.items.length;
+        submit.textContent = n > 0 ? base + ' (' + n + ')' : base;
+        submit.disabled = n === 0;
+        btnNone.hidden = n === 0;
+        var total = Object.keys(ts.options).length;
+        btnAll.disabled = n >= total;
+    }
+
+    ts.on('change', refresh);
+
+    btnAll.addEventListener('click', function () {
+        ts.setValue(Object.keys(ts.options), false);
+        ts.close();
+    });
+    btnNone.addEventListener('click', function () {
+        ts.clear();
+    });
+
+    refresh();
+})();
+</script>
+<?php endif; ?>

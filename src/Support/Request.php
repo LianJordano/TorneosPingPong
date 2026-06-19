@@ -42,6 +42,28 @@ final class Request
         return (int) $value;
     }
 
+    /**
+     * Lista de enteros válidos de un campo array del POST (p. ej. checkboxes
+     * `name="persona_ids[]"`). Ignora valores no numéricos y devuelve [] si el
+     * campo no es un array.
+     *
+     * @return list<int>
+     */
+    public static function postIntArray(string $key): array
+    {
+        $values = $_POST[$key] ?? null;
+        if (!is_array($values)) {
+            return [];
+        }
+        $ids = [];
+        foreach ($values as $value) {
+            if (is_numeric($value)) {
+                $ids[] = (int) $value;
+            }
+        }
+        return $ids;
+    }
+
     public static function isPost(): bool
     {
         return self::method() === 'POST';
