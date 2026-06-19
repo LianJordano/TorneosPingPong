@@ -31,11 +31,15 @@ CREATE TABLE usuario (
     email           VARCHAR(150)  NOT NULL,
     password_hash   VARCHAR(255)  NOT NULL,
     rol             ENUM('ADMIN','ANOTADOR','ESPECTADOR') NOT NULL DEFAULT 'ESPECTADOR',
+    persona_id      INT UNSIGNED  NULL,              -- jugador vinculado (rol ESPECTADOR); NULL = usuario de gestión
     activo          TINYINT(1)    NOT NULL DEFAULT 1,
     created_at      TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_usuario_email (email)
+    UNIQUE KEY uq_usuario_email (email),
+    UNIQUE KEY uq_usuario_persona (persona_id)
+    -- FK usuario.persona_id → persona(id) se añade al final del archivo:
+    -- la tabla persona se crea después de usuario.
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
@@ -243,3 +247,11 @@ CREATE TABLE registro_auditoria (
     KEY idx_auditoria_entidad (entidad, entidad_id),
     CONSTRAINT fk_auditoria_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+--  Claves foráneas diferidas (referencian tablas creadas más abajo)
+-- ---------------------------------------------------------------------
+--  usuario.persona_id → persona(id): vínculo 1:1 opcional para jugadores
+--  convertidos en usuarios espectadores.
+ALTER TABLE usuario
+    ADD CONSTRAINT fk_usuario_persona FOREIGN KEY (persona_id) REFERENCES persona(id) ON DELETE SET NULL;

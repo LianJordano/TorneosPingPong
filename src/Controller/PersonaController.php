@@ -8,6 +8,8 @@ use PingPong\Http\Controller;
 use PingPong\Repository\AreaRepository;
 use PingPong\Repository\NivelRepository;
 use PingPong\Repository\PersonaRepository;
+use PingPong\Repository\UsuarioRepository;
+use PingPong\Service\JugadorUsuarioService;
 use PingPong\Service\RankingHistoricoService;
 use PingPong\Support\Request;
 use PingPong\Support\Session;
@@ -24,6 +26,8 @@ final class PersonaController extends Controller
         private AreaRepository $areas,
         private NivelRepository $niveles,
         private RankingHistoricoService $ranking,
+        private UsuarioRepository $usuarios,
+        private JugadorUsuarioService $jugadorUsuario,
     ) {
         parent::__construct($view);
     }
@@ -68,7 +72,61 @@ final class PersonaController extends Controller
             'hasta'            => $hasta,
             'orden'            => $orden,
             'dir'              => $dir,
+            'personasConUsuario' => $this->usuarios->personaIdsConUsuario(),
         ]);
+    }
+
+    /**
+     * Convierte un jugador en usuario espectador (acción uno a uno).
+     *
+     * @param array<string,string> $params
+     */
+    public function convertirUsuario(array $params): string
+    {
+        if (($guard = $this->requireGestion()) !== null) {
+            return $guard;
+        }
+        if (!$this->csrfOk()) {
+            return $this->csrfFail('/personas');
+        }
+
+        $resultado = $this->jugadorUsuario->convertir((int) $params['id']);
+        $tipo = $resultado['status'] === 'creado'
+            ? 'success'
+            : ($resultado['status'] === 'ya_existe' ? 'info' : 'error');
+        Session::flash($tipo, $resultado['mensaje']);
+
+        return $this->redirect($this->volverA());
+    }
+
+    /** Convierte en bloque los jugadores seleccionados con checkboxes. */
+    public function convertirUsuariosLote(): string
+    {
+        if (($guard = $this->requireGestion()) !== null) {
+            return $guard;
+        }
+        if (!$this->csrfOk()) {
+            return $this->csrfFail('/personas');
+        }
+
+        $ids = Request::postIntArray('persona_ids');
+        if ($ids === []) {
+            Session::flash('error', 'No seleccionaste ningún jugador.');
+            return $this->redirect($this->volverA());
+        }
+
+        $r = $this->jugadorUsuario->convertirLote($ids);
+
+        $partes = [];
+        if ($r['creados'] > 0)    { $partes[] = $r['creados'] . ' usuario(s) creado(s)'; }
+        if ($r['yaExistian'] > 0) { $partes[] = $r['yaExistian'] . ' ya tenían usuario'; }
+        if ($r['omitidos'] > 0)   { $partes[] = $r['omitidos'] . ' omitido(s)'; }
+        $mensaje = 'Conversión en bloque: ' . ($partes === [] ? 'sin cambios' : implode(', ', $partes)) . '.'
+            . ' Contraseña inicial: ' . JugadorUsuarioService::PASSWORD_INICIAL;
+
+        Session::flash($r['creados'] > 0 ? 'success' : 'info', $mensaje);
+
+        return $this->redirect($this->volverA());
     }
 
     public function create(): string
@@ -239,6 +297,20 @@ final class PersonaController extends Controller
         }
 
         return $validator;
+    }
+
+    /**
+     * Destino de retorno tras convertir: conserva los filtros de la lista vía
+     * un hidden `volver`. Solo se acepta una ruta interna de /personas para
+     * evitar redirecciones abiertas a sitios externos.
+     */
+    private function volverA(): string
+    {
+        $volver = (string) Request::post('volver', '');
+        if (str_starts_with($volver, '/personas')) {
+            return $volver;
+        }
+        return '/personas';
     }
 
     private function notFound(): string

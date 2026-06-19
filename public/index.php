@@ -7,6 +7,7 @@ use PingPong\Controller\AuthController;
 use PingPong\Controller\AyudaController;
 use PingPong\Controller\CatalogoController;
 use PingPong\Controller\ConfiguracionController;
+use PingPong\Controller\CuentaController;
 use PingPong\Controller\DashboardController;
 use PingPong\Controller\EliminatoriaController;
 use PingPong\Controller\InscripcionController;
@@ -30,6 +31,7 @@ use PingPong\Repository\PremioRepository;
 use PingPong\Repository\TorneoRepository;
 use PingPong\Repository\UsuarioRepository;
 use PingPong\Service\CargaMasivaJugadoresService;
+use PingPong\Service\JugadorUsuarioService;
 use PingPong\Service\RankingHistoricoService;
 use PingPong\Support\Session;
 use PingPong\Support\View;
@@ -64,10 +66,12 @@ $estadisticas  = new EstadisticaJugadorRepository($pdo);
 
 $rankingHistorico = new RankingHistoricoService($estadisticas);
 $cargaJugadores   = new CargaMasivaJugadoresService($personas, $areas, $niveles);
+$jugadorUsuario   = new JugadorUsuarioService($personas, $usuarios);
 
 $auth        = new AuthController($view, $usuarios);
 $dashboard   = new DashboardController($view, $torneos, $personas);
-$personasCtl = new PersonaController($view, $personas, $areas, $niveles, $rankingHistorico);
+$personasCtl = new PersonaController($view, $personas, $areas, $niveles, $rankingHistorico, $usuarios, $jugadorUsuario);
+$cuentaCtl   = new CuentaController($view, $usuarios);
 $areasCtl    = new CatalogoController($view, $areas, 'Áreas', 'área', '/areas');
 $nivelesCtl  = new CatalogoController($view, $niveles, 'Niveles', 'nivel', '/niveles');
 $configCtl   = new ConfiguracionController($view, $areas, $niveles, $cargaJugadores);
@@ -109,12 +113,20 @@ $router->post('/configuracion/usuarios/{id}/rol', static fn (array $p): string =
 // Personas (jugadores)
 $router->get('/personas',                   static fn (): string => $personasCtl->index());
 $router->get('/personas/nueva',             static fn (): string => $personasCtl->create());
+// IMPORTANTE: la conversión en bloque debe declararse ANTES de POST /personas/{id},
+// si no el comodín {id} captura "convertir-usuarios" y nunca llega acá.
+$router->post('/personas/convertir-usuarios', static fn (): string => $personasCtl->convertirUsuariosLote());
 $router->get('/personas/{id}',              static fn (array $p): string => $personasCtl->show($p));
 $router->post('/personas',                  static fn (): string => $personasCtl->store());
 $router->get('/personas/{id}/editar',       static fn (array $p): string => $personasCtl->edit($p));
 $router->post('/personas/{id}',             static fn (array $p): string => $personasCtl->update($p));
+$router->post('/personas/{id}/convertir-usuario', static fn (array $p): string => $personasCtl->convertirUsuario($p));
 $router->post('/personas/{id}/desactivar',  static fn (array $p): string => $personasCtl->desactivar($p));
 $router->post('/personas/{id}/activar',     static fn (array $p): string => $personasCtl->activar($p));
+
+// Mi cuenta (cualquier rol logueado, incluido ESPECTADOR)
+$router->get('/cuenta/password',  static fn (): string => $cuentaCtl->editarPassword());
+$router->post('/cuenta/password', static fn (): string => $cuentaCtl->actualizarPassword());
 
 // Catálogos: áreas y niveles
 $router->get('/areas',                static fn (): string => $areasCtl->index());

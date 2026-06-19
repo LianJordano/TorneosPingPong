@@ -53,6 +53,7 @@ $puedeGestionar = $rol?->puedeGestionar() ?? false;
                         <a href="/configuracion">Configuración</a>
                     <?php endif; ?>
                     <a href="/glosario">Glosario</a>
+                    <a href="/cuenta/password">Mi cuenta</a>
                     <span class="nav__user">
                         <span class="nav__user-name"><?= e($authUser['nombre']) ?></span>
                         <small class="badge badge--gray"><?= e($rol?->label() ?? '') ?></small>

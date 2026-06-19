@@ -52,6 +52,15 @@ final class Validator
         return $this;
     }
 
+    public function minLen(string $field, int $min, string $label): self
+    {
+        $value = $this->value($field);
+        if ($value !== '' && mb_strlen($value) < $min) {
+            $this->errors[$field] ??= "El campo {$label} debe tener al menos {$min} caracteres.";
+        }
+        return $this;
+    }
+
     /** @param array<int|string> $allowed */
     public function in(string $field, array $allowed, string $label): self
     {

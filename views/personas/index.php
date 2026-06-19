@@ -9,7 +9,9 @@
 /** @var int $hasta */
 /** @var string $orden */
 /** @var string $dir */
+/** @var list<int> $personasConUsuario */
 $puedeGestionar = $rol?->puedeGestionar() ?? false;
+$conUsuario = array_flip($personasConUsuario ?? []);
 
 /** Parámetros base de la URL (sin pagina), conservando filtros y orden. */
 $baseParams = static function () use ($q, $incluirInactivas, $orden, $dir): array {
@@ -21,6 +23,9 @@ $baseParams = static function () use ($q, $incluirInactivas, $orden, $dir): arra
     return $p;
 };
 $urlPagina = static fn (int $n): string => '/personas?' . http_build_query($baseParams() + ['pagina' => $n]);
+
+/** URL de la vista actual: a ella se vuelve tras convertir (conserva filtros y página). */
+$urlActual = $urlPagina($pagina);
 
 /** Encabezado ordenable: alterna dirección si ya es la columna activa. */
 $th = static function (string $col, string $etiqueta) use ($q, $incluirInactivas, $orden, $dir): string {
@@ -67,25 +72,56 @@ $th = static function (string $col, string $etiqueta) use ($q, $incluirInactivas
     <?php else: ?>
         <p class="muted small">Mostrando <?= e((string) $desde) ?>–<?= e((string) $hasta) ?> de <?= e((string) $total) ?> jugador<?= $total === 1 ? '' : 'es' ?>.</p>
 
+        <?php if ($puedeGestionar): ?>
+            <?php /* Form del lote FUERA de la tabla: los checkboxes lo referencian por su id (HTML5 form=""). */ ?>
+            <form id="form-lote" method="post" action="/personas/convertir-usuarios" class="acciones-lote"
+                  onsubmit="return confirm('¿Convertir en usuarios espectadores a los jugadores seleccionados? La contraseña inicial será Jugador123.');">
+                <?= csrf_field() ?>
+                <input type="hidden" name="volver" value="<?= e($urlActual) ?>">
+                <button type="submit" class="btn btn--primary btn--sm">👤 Convertir seleccionados a usuario</button>
+                <span class="muted small">Marcá los jugadores en la tabla. Contraseña inicial: <code>Jugador123</code></span>
+            </form>
+        <?php endif; ?>
+
         <div class="table-wrap">
             <table class="table table--sortable">
                 <thead>
                     <tr>
+                        <?php if ($puedeGestionar): ?>
+                            <th class="col-check"><input type="checkbox" id="check-todos" title="Seleccionar todos"></th>
+                        <?php endif; ?>
                         <?= $th('nombre', 'Apellido y nombre') ?>
                         <?= $th('area', 'Área') ?>
                         <?= $th('nivel', 'Nivel') ?>
                         <?= $th('identificador', 'Identificador') ?>
+                        <th>Usuario</th>
                         <?= $th('estado', 'Estado') ?>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($personas as $p): ?>
+                    <?php $esUsuario = isset($conUsuario[(int) $p['id']]); ?>
                     <tr class="<?= (int) $p['activo'] === 1 ? '' : 'row--muted' ?>">
+                        <?php if ($puedeGestionar): ?>
+                            <td class="col-check">
+                                <?php if (!$esUsuario): ?>
+                                    <input type="checkbox" class="check-jugador" name="persona_ids[]"
+                                           value="<?= e((string) $p['id']) ?>" form="form-lote">
+                                <?php endif; ?>
+                            </td>
+                        <?php endif; ?>
                         <td><strong><a href="/personas/<?= e((string) $p['id']) ?>"><?= e($p['apellido']) ?>, <?= e($p['nombre']) ?></a></strong></td>
                         <td><?= e($p['area'] ?? '—') ?></td>
                         <td><?= e($p['nivel'] ?? '—') ?></td>
                         <td><?= e($p['identificador_interno'] ?? '—') ?></td>
+                        <td>
+                            <?php if ($esUsuario): ?>
+                                <span class="badge badge--blue">✓ Usuario</span>
+                            <?php else: ?>
+                                <span class="badge badge--gray">—</span>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php if ((int) $p['activo'] === 1): ?>
                                 <span class="badge badge--green">Activo</span>
@@ -96,6 +132,14 @@ $th = static function (string $col, string $etiqueta) use ($q, $incluirInactivas
                         <td class="text-right">
                             <?php if ($puedeGestionar): ?>
                                 <a class="link" href="/personas/<?= e((string) $p['id']) ?>/editar">Editar</a>
+                                <?php if (!$esUsuario): ?>
+                                    <form method="post" action="/personas/<?= e((string) $p['id']) ?>/convertir-usuario" class="inline"
+                                          onsubmit="return confirm('¿Crear usuario espectador para este jugador? Contraseña inicial: Jugador123.');">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="volver" value="<?= e($urlActual) ?>">
+                                        <button class="link" type="submit">Hacer usuario</button>
+                                    </form>
+                                <?php endif; ?>
                                 <?php if ((int) $p['activo'] === 1): ?>
                                     <form method="post" action="/personas/<?= e((string) $p['id']) ?>/desactivar" class="inline"
                                           onsubmit="return confirm('¿Dar de baja a este jugador?');">
@@ -135,3 +179,19 @@ $th = static function (string $col, string $etiqueta) use ($q, $incluirInactivas
         <?php endif; ?>
     <?php endif; ?>
 </section>
+
+<?php if ($puedeGestionar): ?>
+<script>
+    // "Seleccionar todos": marca/desmarca solo los checkboxes de jugadores
+    // visibles que todavía no son usuarios.
+    (function () {
+        var maestro = document.getElementById('check-todos');
+        if (!maestro) { return; }
+        maestro.addEventListener('change', function () {
+            document.querySelectorAll('.check-jugador').forEach(function (cb) {
+                cb.checked = maestro.checked;
+            });
+        });
+    })();
+</script>
+<?php endif; ?>

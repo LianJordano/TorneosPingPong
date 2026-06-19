@@ -31,6 +31,14 @@ final class ValidatorTest extends TestCase
         $this->assertTrue((new Validator(['f' => '4']))->in('f', $permitidos, 'Formato')->fails());
     }
 
+    public function test_minLen_exige_longitud_minima(): void
+    {
+        $this->assertTrue((new Validator(['p' => 'corta']))->minLen('p', 8, 'Clave')->fails());
+        $this->assertFalse((new Validator(['p' => 'Jugador123']))->minLen('p', 8, 'Clave')->fails());
+        // Vacío no dispara minLen (se combina con required cuando es obligatorio).
+        $this->assertFalse((new Validator(['p' => '']))->minLen('p', 8, 'Clave')->fails());
+    }
+
     public function test_intMin_exige_entero_y_minimo(): void
     {
         $this->assertTrue((new Validator(['n' => '1']))->intMin('n', 2, 'N')->fails());
