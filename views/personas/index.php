@@ -12,8 +12,9 @@
 /** @var list<int> $personasConUsuario */
 $puedeGestionar = $rol?->puedeGestionar() ?? false;
 $conUsuario = array_flip($personasConUsuario ?? []);
+$hayFiltros = $q !== '' || $incluirInactivas;
 
-/** Parámetros base de la URL (sin pagina), conservando filtros y orden. */
+/** Base URL params (without page), keeping filters and sort. */
 $baseParams = static function () use ($q, $incluirInactivas, $orden, $dir): array {
     $p = [];
     if ($q !== '') { $p['q'] = $q; }
@@ -24,136 +25,208 @@ $baseParams = static function () use ($q, $incluirInactivas, $orden, $dir): arra
 };
 $urlPagina = static fn (int $n): string => '/personas?' . http_build_query($baseParams() + ['pagina' => $n]);
 
-/** URL de la vista actual: a ella se vuelve tras convertir (conserva filtros y página). */
+/** Current view URL: bulk/single conversion returns here (keeps filters and page). */
 $urlActual = $urlPagina($pagina);
 
-/** Encabezado ordenable: alterna dirección si ya es la columna activa. */
+/** Sortable header: toggles direction when it is already the active column. */
 $th = static function (string $col, string $etiqueta) use ($q, $incluirInactivas, $orden, $dir): string {
-    $nuevaDir = ($orden === $col && $dir === 'asc') ? 'desc' : 'asc';
+    $activa = $orden === $col;
+    $nuevaDir = ($activa && $dir === 'asc') ? 'desc' : 'asc';
     $params = [];
     if ($q !== '') { $params['q'] = $q; }
     if ($incluirInactivas) { $params['inactivas'] = 1; }
     $params['orden'] = $col;
     $params['dir'] = $nuevaDir;
-    $flecha = $orden === $col ? ($dir === 'asc' ? ' ▲' : ' ▼') : '';
-    $cls = $orden === $col ? ' class="th-activo"' : '';
-    return '<th' . $cls . '><a href="/personas?' . e(http_build_query($params)) . '">' . e($etiqueta) . e($flecha) . '</a></th>';
+    $ariaSort = $activa ? ($dir === 'asc' ? 'ascending' : 'descending') : 'none';
+    $icono = $activa ? ($dir === 'asc' ? 'chevron-up' : 'chevron-down') : 'sort';
+    $accion = $nuevaDir === 'asc' ? 'ordenar ascendente' : 'ordenar descendente';
+    return '<th scope="col" aria-sort="' . $ariaSort . '"' . ($activa ? ' class="is-sorted"' : '') . '>'
+        . '<a class="sort-link" href="/personas?' . e(http_build_query($params)) . '">'
+        . '<span>' . e($etiqueta) . '</span><span class="sr-only">, ' . e($accion) . '</span>'
+        . icon($icono) . '</a></th>';
 };
-?>
-<section class="page-head page-head--hero">
-    <div>
-        <span class="eyebrow">Roster management</span>
-        <h1>Jugadores <span class="badge badge--gray"><?= e((string) $total) ?></span></h1>
-        <p class="muted">Buscá, filtrá y gestioná la base competitiva con mejor jerarquía visual.</p>
-    </div>
-    <div class="actions">
-        <?php if ($puedeGestionar): ?>
-            <a class="btn btn--ghost btn--sm" href="/configuracion">Configuración</a>
-            <a class="btn btn--primary" href="/personas/nueva">Nuevo jugador</a>
-        <?php endif; ?>
-    </div>
-</section>
 
-<section class="card">
-    <form method="get" action="/personas" class="filtros">
-        <input type="search" name="q" value="<?= e($q) ?>" placeholder="Buscar por nombre, apellido, área, nivel, identificador o correo…" class="filtros__q">
-        <label class="filtros__check">
+$etiquetasOrden = [
+    'nombre' => 'jugador',
+    'area' => 'área',
+    'nivel' => 'nivel',
+    'identificador' => 'identificador',
+    'estado' => 'estado',
+];
+
+/** Compact page window for the pagination. */
+$ventana = 2;
+$pagInicio = max(1, $pagina - $ventana);
+$pagFin = min($totalPaginas, $pagina + $ventana);
+?>
+<header class="page-head">
+    <div>
+        <span class="eyebrow"><?= icon('users') ?> Competencia</span>
+        <h1>Jugadores</h1>
+        <p>Busca, filtra y gestiona la base de jugadores. Abre un jugador para ver su perfil y estadísticas.</p>
+    </div>
+    <?php if ($puedeGestionar): ?>
+        <div class="actions">
+            <a class="btn btn--primary" href="/personas/nueva"><?= icon('user-plus') ?> Nuevo jugador</a>
+        </div>
+    <?php endif; ?>
+</header>
+
+<section class="card players-card" aria-labelledby="players-list-title">
+    <h2 id="players-list-title" class="sr-only">Listado de jugadores</h2>
+
+    <form method="get" action="/personas" class="toolbar players-toolbar" role="search">
+        <div class="search toolbar__grow">
+            <label class="sr-only" for="personas-q">Buscar jugadores</label>
+            <?= icon('search') ?>
+            <input type="search" id="personas-q" name="q" value="<?= e($q) ?>"
+                   placeholder="Nombre, apellido, área, nivel, identificador o correo">
+        </div>
+        <label class="check">
             <input type="checkbox" name="inactivas" value="1" <?= $incluirInactivas ? 'checked' : '' ?>>
             Incluir inactivos
         </label>
-        <button type="submit" class="btn btn--primary btn--sm">Filtrar</button>
-        <?php if ($q !== '' || $incluirInactivas): ?>
-            <a class="btn btn--ghost btn--sm" href="/personas">Limpiar</a>
-        <?php endif; ?>
+        <div class="actions">
+            <button type="submit" class="btn btn--secondary"><?= icon('filter') ?> Filtrar</button>
+            <?php if ($hayFiltros): ?>
+                <a class="btn btn--ghost" href="/personas"><?= icon('x') ?> Limpiar</a>
+            <?php endif; ?>
+        </div>
     </form>
 
     <?php if ($total === 0): ?>
-        <p class="muted"><?= $q !== '' ? 'No hay jugadores que coincidan con la búsqueda.' : 'No hay jugadores cargados.' ?></p>
+        <div class="empty-state">
+            <span class="empty-state__icon"><?= icon($q !== '' ? 'search' : 'users') ?></span>
+            <?php if ($q !== ''): ?>
+                <p class="empty-state__title">Sin resultados</p>
+                <p>No hay jugadores que coincidan con «<?= e($q) ?>».</p>
+                <div class="actions"><a class="btn btn--secondary" href="/personas">Ver todos los jugadores</a></div>
+            <?php else: ?>
+                <p class="empty-state__title">Todavía no hay jugadores</p>
+                <p>Cuando se carguen jugadores aparecerán aquí.</p>
+                <?php if ($puedeGestionar): ?>
+                    <div class="actions"><a class="btn btn--primary" href="/personas/nueva"><?= icon('user-plus') ?> Nuevo jugador</a></div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
     <?php else: ?>
-        <p class="muted small">Mostrando <?= e((string) $desde) ?>–<?= e((string) $hasta) ?> de <?= e((string) $total) ?> jugador<?= $total === 1 ? '' : 'es' ?>.</p>
+        <p class="players-summary muted small">
+            Mostrando <strong class="num"><?= e((string) $desde) ?>–<?= e((string) $hasta) ?></strong>
+            de <strong class="num"><?= e((string) $total) ?></strong> jugador<?= $total === 1 ? '' : 'es' ?><?= $incluirInactivas ? ' (incluye inactivos)' : '' ?>.
+        </p>
 
         <?php if ($puedeGestionar): ?>
-            <?php /* Form del lote FUERA de la tabla: los checkboxes lo referencian por su id (HTML5 form=""). */ ?>
-            <form id="form-lote" method="post" action="/personas/convertir-usuarios" class="acciones-lote"
-                  onsubmit="return confirm('¿Convertir en usuarios espectadores a los jugadores seleccionados? La contraseña inicial será Jugador123.');">
+            <?php /* Bulk form OUTSIDE the table: row checkboxes reference it via HTML5 form="". */ ?>
+            <form id="form-lote" method="post" action="/personas/convertir-usuarios" class="bulk-bar"
+                  data-confirm="Los jugadores seleccionados podrán entrar como espectadores. La contraseña inicial será Jugador123."
+                  data-confirm-title="¿Convertir en usuarios?"
+                  data-confirm-ok="Convertir"
+                  data-confirm-tone="info">
                 <?= csrf_field() ?>
                 <input type="hidden" name="volver" value="<?= e($urlActual) ?>">
-                <button type="submit" class="btn btn--primary btn--sm">👤 Convertir seleccionados a usuario</button>
-                <span class="muted small">Marcá los jugadores en la tabla. Contraseña inicial: <code>Jugador123</code></span>
+                <span class="bulk-bar__icon" aria-hidden="true"><?= icon('check-circle') ?></span>
+                <div class="bulk-bar__text">
+                    <span class="bulk-bar__count" data-bulk-count aria-live="polite">Selecciona jugadores en la tabla</span>
+                    <span class="muted xsmall">Solo jugadores sin usuario. Se crea acceso de espectador con contraseña inicial <code>Jugador123</code>.</span>
+                </div>
+                <button type="submit" class="btn btn--primary" data-bulk-submit>
+                    <?= icon('user-plus') ?> Convertir en usuarios
+                </button>
             </form>
         <?php endif; ?>
 
         <div class="table-wrap">
-            <table class="table table--sortable">
+            <table class="table table--stack players-table">
+                <caption class="sr-only">Jugadores ordenados por <?= e($etiquetasOrden[$orden] ?? $orden) ?>, <?= $dir === 'asc' ? 'ascendente' : 'descendente' ?></caption>
                 <thead>
                     <tr>
                         <?php if ($puedeGestionar): ?>
-                            <th class="col-check"><input type="checkbox" id="check-todos" title="Seleccionar todos"></th>
+                            <th scope="col" class="col-check">
+                                <input type="checkbox" id="check-todos" aria-label="Seleccionar todos los jugadores de esta página">
+                            </th>
                         <?php endif; ?>
-                        <?= $th('nombre', 'Apellido y nombre') ?>
+                        <?= $th('nombre', 'Jugador') ?>
                         <?= $th('area', 'Área') ?>
                         <?= $th('nivel', 'Nivel') ?>
                         <?= $th('identificador', 'Identificador') ?>
-                        <th>Usuario</th>
+                        <th scope="col">Usuario</th>
                         <?= $th('estado', 'Estado') ?>
-                        <th></th>
+                        <?php if ($puedeGestionar): ?>
+                            <th scope="col" class="text-right">Acciones</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($personas as $p): ?>
-                    <?php $esUsuario = isset($conUsuario[(int) $p['id']]); ?>
-                    <tr class="<?= (int) $p['activo'] === 1 ? '' : 'row--muted' ?>">
+                    <?php
+                    $id = (string) $p['id'];
+                    $esUsuario = isset($conUsuario[(int) $p['id']]);
+                    $activo = (int) $p['activo'] === 1;
+                    $nombreCompleto = $p['apellido'] . ', ' . $p['nombre'];
+                    ?>
+                    <tr class="<?= $activo ? '' : 'row--muted' ?>">
                         <?php if ($puedeGestionar): ?>
-                            <td class="col-check">
-                                <?php if (!$esUsuario): ?>
-                                    <input type="checkbox" class="check-jugador" name="persona_ids[]"
-                                           value="<?= e((string) $p['id']) ?>" form="form-lote">
-                                <?php endif; ?>
+                            <td class="col-check"<?= $esUsuario ? '' : ' data-label="Seleccionar"' ?>><?php if (!$esUsuario): ?><input type="checkbox" class="check-jugador" name="persona_ids[]" value="<?= e($id) ?>" form="form-lote" aria-label="Seleccionar a <?= e($nombreCompleto) ?>"><?php endif; ?></td>
+                        <?php endif; ?>
+                        <td class="cell--primary">
+                            <a class="player-cell" href="/personas/<?= e($id) ?>">
+                                <span class="avatar" aria-hidden="true"><?= e(initials($p['nombre'] . ' ' . $p['apellido'])) ?></span>
+                                <span class="player-cell__name"><?= e($p['apellido']) ?>, <?= e($p['nombre']) ?></span>
+                            </a>
+                        </td>
+                        <td data-label="Área"><?php if (!empty($p['area'])): ?><?= e($p['area']) ?><?php else: ?><span class="muted">Sin área</span><?php endif; ?></td>
+                        <td data-label="Nivel"><?php if (!empty($p['nivel'])): ?><?= e($p['nivel']) ?><?php else: ?><span class="muted">Sin nivel</span><?php endif; ?></td>
+                        <td data-label="Identificador"><?php if (!empty($p['identificador_interno'])): ?><span class="num"><?= e($p['identificador_interno']) ?></span><?php else: ?><span class="muted" aria-hidden="true">—</span><span class="sr-only">Sin identificador</span><?php endif; ?></td>
+                        <td data-label="Usuario">
+                            <?php if ($esUsuario): ?>
+                                <span class="badge badge--blue"><?= icon('check') ?> Usuario</span>
+                            <?php else: ?>
+                                <span class="badge badge--gray">Sin usuario</span>
+                            <?php endif; ?>
+                        </td>
+                        <td data-label="Estado">
+                            <?php if ($activo): ?>
+                                <span class="badge badge--green badge--dot">Activo</span>
+                            <?php else: ?>
+                                <span class="badge badge--red badge--dot">Baja</span>
+                            <?php endif; ?>
+                        </td>
+                        <?php if ($puedeGestionar): ?>
+                            <td class="actions-cell">
+                                <div class="actions">
+                                    <a class="btn btn--ghost btn--icon" href="/personas/<?= e($id) ?>/editar"
+                                       title="Editar" aria-label="Editar a <?= e($nombreCompleto) ?>"><?= icon('edit') ?></a>
+                                    <?php if (!$esUsuario): ?>
+                                        <form method="post" action="/personas/<?= e($id) ?>/convertir-usuario" class="inline"
+                                              data-confirm="Se creará un usuario espectador para <?= e($nombreCompleto) ?>. Contraseña inicial: Jugador123."
+                                              data-confirm-title="¿Crear usuario?"
+                                              data-confirm-ok="Crear usuario"
+                                              data-confirm-tone="info">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="volver" value="<?= e($urlActual) ?>">
+                                            <button class="btn btn--ghost btn--icon" type="submit"
+                                                    title="Hacer usuario" aria-label="Crear usuario para <?= e($nombreCompleto) ?>"><?= icon('user-plus') ?></button>
+                                        </form>
+                                    <?php endif; ?>
+                                    <?php if ($activo): ?>
+                                        <form method="post" action="/personas/<?= e($id) ?>/desactivar" class="inline"
+                                              data-confirm="<?= e($nombreCompleto) ?> dejará de estar activo. Podrás reactivarlo después."
+                                              data-confirm-title="¿Dar de baja al jugador?"
+                                              data-confirm-ok="Dar de baja">
+                                            <?= csrf_field() ?>
+                                            <button class="btn btn--danger-soft btn--icon" type="submit"
+                                                    title="Dar de baja" aria-label="Dar de baja a <?= e($nombreCompleto) ?>"><?= icon('archive') ?></button>
+                                        </form>
+                                    <?php else: ?>
+                                        <form method="post" action="/personas/<?= e($id) ?>/activar" class="inline">
+                                            <?= csrf_field() ?>
+                                            <button class="btn btn--secondary" type="submit"
+                                                    aria-label="Reactivar a <?= e($nombreCompleto) ?>"><?= icon('refresh') ?> Reactivar</button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                         <?php endif; ?>
-                        <td><strong><a href="/personas/<?= e((string) $p['id']) ?>"><?= e($p['apellido']) ?>, <?= e($p['nombre']) ?></a></strong></td>
-                        <td><?= e($p['area'] ?? '—') ?></td>
-                        <td><?= e($p['nivel'] ?? '—') ?></td>
-                        <td><?= e($p['identificador_interno'] ?? '—') ?></td>
-                        <td>
-                            <?php if ($esUsuario): ?>
-                                <span class="badge badge--blue">✓ Usuario</span>
-                            <?php else: ?>
-                                <span class="badge badge--gray">—</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if ((int) $p['activo'] === 1): ?>
-                                <span class="badge badge--green">Activo</span>
-                            <?php else: ?>
-                                <span class="badge badge--red">Baja</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-right">
-                            <?php if ($puedeGestionar): ?>
-                                <a class="link" href="/personas/<?= e((string) $p['id']) ?>/editar">Editar</a>
-                                <?php if (!$esUsuario): ?>
-                                    <form method="post" action="/personas/<?= e((string) $p['id']) ?>/convertir-usuario" class="inline"
-                                          onsubmit="return confirm('¿Crear usuario espectador para este jugador? Contraseña inicial: Jugador123.');">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="volver" value="<?= e($urlActual) ?>">
-                                        <button class="link" type="submit">Hacer usuario</button>
-                                    </form>
-                                <?php endif; ?>
-                                <?php if ((int) $p['activo'] === 1): ?>
-                                    <form method="post" action="/personas/<?= e((string) $p['id']) ?>/desactivar" class="inline"
-                                          onsubmit="return confirm('¿Dar de baja a este jugador?');">
-                                        <?= csrf_field() ?>
-                                        <button class="link link--danger" type="submit">Baja</button>
-                                    </form>
-                                <?php else: ?>
-                                    <form method="post" action="/personas/<?= e((string) $p['id']) ?>/activar" class="inline">
-                                        <?= csrf_field() ?>
-                                        <button class="link" type="submit">Reactivar</button>
-                                    </form>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -161,20 +234,39 @@ $th = static function (string $col, string $etiqueta) use ($q, $incluirInactivas
         </div>
 
         <?php if ($totalPaginas > 1): ?>
-            <nav class="paginador">
-                <?php if ($pagina > 1): ?>
-                    <a class="btn btn--ghost btn--sm" href="<?= e($urlPagina($pagina - 1)) ?>">← Anterior</a>
-                <?php else: ?>
-                    <span class="btn btn--ghost btn--sm is-disabled">← Anterior</span>
-                <?php endif; ?>
+            <nav class="pagination" aria-label="Paginación de jugadores">
+                <span>Página <strong class="num"><?= e((string) $pagina) ?></strong> de <strong class="num"><?= e((string) $totalPaginas) ?></strong></span>
+                <div class="pagination__pages">
+                    <?php if ($pagina > 1): ?>
+                        <a class="pagination__page" href="<?= e($urlPagina($pagina - 1)) ?>" aria-label="Página anterior" rel="prev"><?= icon('chevron-left') ?></a>
+                    <?php else: ?>
+                        <span class="pagination__page is-disabled" aria-hidden="true"><?= icon('chevron-left') ?></span>
+                    <?php endif; ?>
 
-                <span class="paginador__info">Página <?= e((string) $pagina) ?> de <?= e((string) $totalPaginas) ?></span>
+                    <?php if ($pagInicio > 1): ?>
+                        <a class="pagination__page" href="<?= e($urlPagina(1)) ?>" aria-label="Página 1">1</a>
+                        <?php if ($pagInicio > 2): ?><span class="pagination__page is-disabled" aria-hidden="true">…</span><?php endif; ?>
+                    <?php endif; ?>
 
-                <?php if ($pagina < $totalPaginas): ?>
-                    <a class="btn btn--ghost btn--sm" href="<?= e($urlPagina($pagina + 1)) ?>">Siguiente →</a>
-                <?php else: ?>
-                    <span class="btn btn--ghost btn--sm is-disabled">Siguiente →</span>
-                <?php endif; ?>
+                    <?php for ($n = $pagInicio; $n <= $pagFin; $n++): ?>
+                        <?php if ($n === $pagina): ?>
+                            <span class="pagination__page" aria-current="page"><?= e((string) $n) ?></span>
+                        <?php else: ?>
+                            <a class="pagination__page" href="<?= e($urlPagina($n)) ?>" aria-label="Página <?= e((string) $n) ?>"><?= e((string) $n) ?></a>
+                        <?php endif; ?>
+                    <?php endfor; ?>
+
+                    <?php if ($pagFin < $totalPaginas): ?>
+                        <?php if ($pagFin < $totalPaginas - 1): ?><span class="pagination__page is-disabled" aria-hidden="true">…</span><?php endif; ?>
+                        <a class="pagination__page" href="<?= e($urlPagina($totalPaginas)) ?>" aria-label="Página <?= e((string) $totalPaginas) ?>"><?= e((string) $totalPaginas) ?></a>
+                    <?php endif; ?>
+
+                    <?php if ($pagina < $totalPaginas): ?>
+                        <a class="pagination__page" href="<?= e($urlPagina($pagina + 1)) ?>" aria-label="Página siguiente" rel="next"><?= icon('chevron-right') ?></a>
+                    <?php else: ?>
+                        <span class="pagination__page is-disabled" aria-hidden="true"><?= icon('chevron-right') ?></span>
+                    <?php endif; ?>
+                </div>
             </nav>
         <?php endif; ?>
     <?php endif; ?>
@@ -182,16 +274,37 @@ $th = static function (string $col, string $etiqueta) use ($q, $incluirInactivas
 
 <?php if ($puedeGestionar): ?>
 <script>
-    // "Seleccionar todos": marca/desmarca solo los checkboxes de jugadores
-    // visibles que todavía no son usuarios.
+    // Select all: checks/unchecks only the visible players that are not users yet,
+    // and keeps the bulk bar (count + submit state) in sync with the selection.
     (function () {
         var maestro = document.getElementById('check-todos');
-        if (!maestro) { return; }
+        var lote = document.getElementById('form-lote');
+        if (!maestro || !lote) { return; }
+        var contador = lote.querySelector('[data-bulk-count]');
+        var enviar = lote.querySelector('[data-bulk-submit]');
+        var checks = function () { return document.querySelectorAll('.check-jugador'); };
+
+        var sync = function () {
+            var total = checks().length;
+            var marcados = document.querySelectorAll('.check-jugador:checked').length;
+            maestro.checked = total > 0 && marcados === total;
+            maestro.indeterminate = marcados > 0 && marcados < total;
+            maestro.disabled = total === 0;
+            lote.classList.toggle('is-active', marcados > 0);
+            if (enviar) { enviar.disabled = marcados === 0; }
+            if (contador) {
+                contador.textContent = marcados === 0
+                    ? 'Selecciona jugadores en la tabla'
+                    : marcados + (marcados === 1 ? ' jugador seleccionado' : ' jugadores seleccionados');
+            }
+        };
+
         maestro.addEventListener('change', function () {
-            document.querySelectorAll('.check-jugador').forEach(function (cb) {
-                cb.checked = maestro.checked;
-            });
+            checks().forEach(function (cb) { cb.checked = maestro.checked; });
+            sync();
         });
+        checks().forEach(function (cb) { cb.addEventListener('change', sync); });
+        sync();
     })();
 </script>
 <?php endif; ?>

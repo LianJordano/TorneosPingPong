@@ -1008,8 +1008,10 @@ form.inline { display: inline; }
 .pagination__pages { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
 
 .pagination__page {
-    display: inline-grid;
-    place-items: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-1);
     min-width: 40px;
     height: 40px;
     padding: 0 var(--sp-2);
@@ -1025,6 +1027,7 @@ form.inline { display: inline; }
 .pagination__page.is-active,
 .pagination__page[aria-current="page"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .pagination__page.is-disabled { opacity: 0.45; pointer-events: none; }
+.pagination__gap { display: inline-grid; place-items: center; min-width: 32px; height: 40px; color: var(--muted); }
 
 /* ---------- Progress ---------- */
 .progress,
