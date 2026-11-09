@@ -34,7 +34,7 @@ final class PublicoController extends Controller
             http_response_code(404);
             return $this->view->page('publico/no-disponible', [
                 'title' => 'No disponible', 'flashes' => [], 'authUser' => null, 'rol' => null,
-            ]);
+            ], 'layout-public');
         }
 
         $id = (int) $torneo['id'];
@@ -98,6 +98,6 @@ final class PublicoController extends Controller
             'proximos'    => $proximos,
             'totalPendientes' => $totalPendientes,
             'clasificados' => (int) $torneo['num_clasificados'],
-        ]);
+        ], 'layout-public');
     }
 }
