@@ -552,3 +552,18 @@
     .winner-spotlight__icon,
     .podio__medal { animation: none; border: 1px solid #999; }
 }
+
+/* Podium step: the position number at the base of each podium card. */
+.podio__step {
+    display: grid;
+    place-items: center;
+    margin-top: var(--sp-3);
+    padding: var(--sp-2);
+    border-radius: var(--r) var(--r) 0 0;
+    background: var(--medal-soft, var(--surface-3));
+    color: var(--medal-ink, var(--text-2));
+    font-family: var(--font-display);
+    font-size: var(--fs-2xl);
+    font-weight: 700;
+    line-height: 1;
+}

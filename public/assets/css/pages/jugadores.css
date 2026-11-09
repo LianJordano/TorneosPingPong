@@ -276,3 +276,9 @@
 }
 
 .ranking-formula__title .icon { color: var(--primary); }
+
+/* Medal icons in the player's competitive summary. */
+.medal-icon { color: var(--muted); }
+.medal-icon--gold { color: var(--gold); }
+.medal-icon--silver { color: var(--silver); }
+.medal-icon--bronze { color: var(--bronze); }
