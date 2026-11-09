@@ -1,0 +1,342 @@
+/* ==========================================================================
+   App shell — sidebar (desktop), drawer + topbar + tabbar (mobile),
+   guest shell (login / public pages) and page container.
+   Breakpoint: sidebar is persistent from 1024px up.
+   ========================================================================== */
+
+.skip-link {
+    position: absolute;
+    left: var(--sp-4);
+    top: -100px;
+    z-index: 100;
+    padding: var(--sp-2) var(--sp-4);
+    border-radius: var(--r);
+    background: var(--primary);
+    color: var(--on-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.skip-link:focus { top: var(--sp-3); color: var(--on-primary); }
+
+.container {
+    width: 100%;
+    max-width: var(--content-max);
+    margin-inline: auto;
+    padding-inline: var(--sp-4);
+}
+
+/* ---------- Shell ---------- */
+.shell { min-height: 100vh; }
+
+.shell__main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-width: 0;
+}
+
+.page {
+    flex: 1;
+    width: 100%;
+    max-width: var(--content-max);
+    margin-inline: auto;
+    padding: var(--sp-5) var(--sp-4) var(--sp-8);
+}
+
+/* Legacy alias kept for views that still wrap with .page-shell */
+.page-shell { padding-block: var(--sp-5) var(--sp-8); }
+
+@media (min-width: 720px) {
+    .page { padding: var(--sp-8) var(--sp-8) var(--sp-10); }
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(var(--sidebar-w), 86vw);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+    padding: var(--sp-4) var(--sp-3);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    transform: translateX(-102%);
+    transition: transform 220ms var(--ease), box-shadow 220ms var(--ease);
+}
+
+.sidebar.is-open {
+    transform: none;
+    box-shadow: var(--shadow-lg);
+}
+
+body.nav-abierto { overflow: hidden; }
+
+.nav-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(2, 6, 23, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+@media (min-width: 1024px) {
+    .sidebar {
+        transform: none;
+        box-shadow: none;
+        width: var(--sidebar-w);
+    }
+
+    .shell__main { padding-left: var(--sidebar-w); }
+    .nav-overlay { display: none !important; }
+    body.nav-abierto { overflow: auto; }
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-2);
+    border-radius: var(--r);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.brand:hover { color: var(--text); }
+
+.brand__mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: var(--r);
+    background: linear-gradient(140deg, var(--primary), #1e3a8a);
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgba(37, 99, 235, 0.7);
+}
+
+.brand__mark::after {
+    /* the ball */
+    content: "";
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+}
+
+.brand__mark .icon { width: 22px; height: 22px; }
+
+.brand__text { display: grid; line-height: 1.2; min-width: 0; }
+.brand__text strong {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.brand__text small { color: var(--muted); font-size: var(--fs-xs); }
+
+/* Navigation groups */
+.side-nav { display: grid; gap: var(--sp-5); }
+
+.side-nav__group { display: grid; gap: 2px; }
+
+.side-nav__title {
+    margin: 0 0 var(--sp-1);
+    padding: 0 var(--sp-3);
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.side-nav__link {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 42px;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r);
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.side-nav__link .icon { color: var(--muted); transition: color var(--dur) var(--ease); }
+
+.side-nav__link:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.side-nav__link[aria-current="page"] {
+    background: var(--primary-soft);
+    color: var(--primary-text);
+}
+
+.side-nav__link[aria-current="page"] .icon { color: var(--primary); }
+
+.sidebar__footer {
+    margin-top: auto;
+    display: grid;
+    gap: var(--sp-2);
+    padding-top: var(--sp-3);
+    border-top: 1px solid var(--border);
+}
+
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-2);
+    border-radius: var(--r);
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary-text);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.avatar--lg { width: 56px; height: 56px; font-size: var(--fs-lg); }
+
+.user-card__text { display: grid; min-width: 0; line-height: 1.25; }
+.user-card__name {
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.user-card__role { font-size: var(--fs-xs); color: var(--muted); }
+
+.sidebar__actions {
+    display: flex;
+    gap: var(--sp-2);
+}
+
+.sidebar__actions > * { flex: 1; }
+.sidebar__actions form { display: flex; }
+.sidebar__actions form .btn { flex: 1; }
+
+/* ---------- Topbar (mobile/tablet only) ---------- */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    height: var(--topbar-h);
+    padding: 0 var(--sp-3);
+    background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+    backdrop-filter: saturate(160%) blur(12px);
+    border-bottom: 1px solid var(--border);
+}
+
+.topbar .brand { padding: var(--sp-1); }
+.topbar .brand__mark { width: 34px; height: 34px; }
+.topbar__spacer { flex: 1; }
+
+@media (min-width: 1024px) {
+    .topbar { display: none; }
+}
+
+.nav-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: var(--r);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.nav-toggle:hover { background: var(--surface-2); }
+
+/* ---------- Bottom tab bar (phones) ---------- */
+.tabbar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+    backdrop-filter: saturate(160%) blur(12px);
+    border-top: 1px solid var(--border);
+}
+
+.tabbar__link {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 2px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.tabbar__link .icon { width: 22px; height: 22px; }
+.tabbar__link[aria-current="page"] { color: var(--primary-text); }
+.tabbar__link:hover { color: var(--text); }
+
+body.has-tabbar .shell__main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
+
+@media (min-width: 720px) {
+    .tabbar { display: none; }
+    body.has-tabbar .shell__main { padding-bottom: 0; }
+}
+
+/* ---------- Footer ---------- */
+.footer {
+    padding: var(--sp-4);
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    text-align: center;
+}
+
+.footer a { color: inherit; }
+
+/* ---------- Guest shell (login, public) ---------- */
+.guest-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    max-width: var(--content-max);
+    margin-inline: auto;
+    padding: var(--sp-4);
+}
+
+.guest-main {
+    width: 100%;
+    max-width: var(--content-max);
+    margin-inline: auto;
+    padding: var(--sp-2) var(--sp-4) var(--sp-10);
+}

@@ -1,0 +1,219 @@
+/* ==========================================================================
+   Design tokens — single source of truth for color, type, spacing, radius,
+   elevation and motion. Light theme by default; dark theme follows the OS
+   unless the user forces one with <html data-theme="light|dark">.
+   ========================================================================== */
+
+:root {
+    color-scheme: light;
+
+    /* Surfaces */
+    --bg: #f4f6fb;
+    --bg-elevated: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f6f8fc;
+    --surface-3: #eceff6;
+    --surface-inverse: #0f172a;
+    --border: #e3e8f0;
+    --border-strong: #cdd5e1;
+
+    /* Text */
+    --text: #0f172a;
+    --text-2: #334155;
+    --muted: #64748b;
+    --on-inverse: #f8fafc;
+    --on-inverse-muted: #a9b6cc;
+
+    /* Brand */
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-soft: #eef3ff;
+    --primary-soft-border: #cfdcfd;
+    --primary-text: #1d4ed8;
+    --on-primary: #ffffff;
+    --accent: #f97316;          /* the ball */
+    --accent-soft: #fff4ec;
+
+    /* Semantic */
+    --success: #16a34a;
+    --success-soft: #ecfdf3;
+    --success-text: #166534;
+    --success-border: #bbf0cf;
+    --danger: #dc2626;
+    --danger-hover: #b91c1c;
+    --danger-soft: #fef2f2;
+    --danger-text: #991b1b;
+    --danger-border: #fbcaca;
+    --warning: #d97706;
+    --warning-soft: #fffbeb;
+    --warning-text: #92400e;
+    --warning-border: #fde3a7;
+    --info-soft: #eff6ff;
+    --info-text: #1e40af;
+    --info-border: #cfe0fd;
+    --purple-soft: #f5f3ff;
+    --purple-text: #6d28d9;
+    --cyan-soft: #ecfeff;
+    --cyan-text: #0e7490;
+    --gray-soft: #f1f5f9;
+    --gray-text: #475569;
+
+    /* Medal colors (podium, ranking) */
+    --gold: #d4a017;
+    --gold-soft: #fdf6dc;
+    --silver: #94a3b8;
+    --silver-soft: #f1f5f9;
+    --bronze: #c2410c;
+    --bronze-soft: #fff1e8;
+
+    /* Focus */
+    --focus-ring: 0 0 0 3px var(--bg-elevated), 0 0 0 5px var(--primary);
+
+    /* Typography */
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+    --fs-xs: 0.75rem;
+    --fs-sm: 0.875rem;
+    --fs-md: 1rem;
+    --fs-lg: 1.125rem;
+    --fs-xl: 1.375rem;
+    --fs-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+    --fs-3xl: clamp(1.85rem, 1.4rem + 1.8vw, 2.6rem);
+
+    /* Spacing (4px scale) */
+    --sp-1: 0.25rem;
+    --sp-2: 0.5rem;
+    --sp-3: 0.75rem;
+    --sp-4: 1rem;
+    --sp-5: 1.25rem;
+    --sp-6: 1.5rem;
+    --sp-8: 2rem;
+    --sp-10: 2.5rem;
+
+    /* Radius */
+    --r-sm: 8px;
+    --r: 12px;
+    --r-lg: 16px;
+    --r-xl: 20px;
+    --r-pill: 999px;
+    --radius: var(--r-lg); /* legacy alias */
+
+    /* Elevation */
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.05);
+    --shadow: 0 4px 12px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 18px 40px -12px rgba(15, 23, 42, 0.25);
+
+    /* Motion */
+    --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --dur: 160ms;
+
+    /* Layout */
+    --sidebar-w: 260px;
+    --topbar-h: 60px;
+    --tabbar-h: 64px;
+    --content-max: 1240px;
+}
+
+/* Dark theme: tokens only. Components must use tokens, never raw colors. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #0b1120;
+        --bg-elevated: #111a2e;
+        --surface: #111a2e;
+        --surface-2: #162038;
+        --surface-3: #1d2944;
+        --surface-inverse: #e2e8f0;
+        --border: #23304b;
+        --border-strong: #33425f;
+        --text: #e6ecf5;
+        --text-2: #c3cede;
+        --muted: #8f9db4;
+        --on-inverse: #0f172a;
+        --on-inverse-muted: #334155;
+        --primary: #4f8bff;
+        --primary-hover: #6b9dff;
+        --primary-soft: #16264a;
+        --primary-soft-border: #26407a;
+        --primary-text: #8fb4ff;
+        --accent-soft: #3a2413;
+        --success-soft: #0f2a1d;
+        --success-text: #6ee7a0;
+        --success-border: #1d4a33;
+        --danger: #ef4444;
+        --danger-hover: #f87171;
+        --danger-soft: #331418;
+        --danger-text: #fca5a5;
+        --danger-border: #5c2129;
+        --warning-soft: #33250c;
+        --warning-text: #fcd34d;
+        --warning-border: #5a4214;
+        --info-soft: #132443;
+        --info-text: #93c5fd;
+        --info-border: #24406e;
+        --purple-soft: #241a45;
+        --purple-text: #c4b5fd;
+        --cyan-soft: #0e2a33;
+        --cyan-text: #67e8f9;
+        --gray-soft: #1d2944;
+        --gray-text: #c3cede;
+        --gold-soft: #3a3010;
+        --silver-soft: #1d2944;
+        --bronze-soft: #3a2010;
+        --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.25);
+        --shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
+    }
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0b1120;
+    --bg-elevated: #111a2e;
+    --surface: #111a2e;
+    --surface-2: #162038;
+    --surface-3: #1d2944;
+    --surface-inverse: #e2e8f0;
+    --border: #23304b;
+    --border-strong: #33425f;
+    --text: #e6ecf5;
+    --text-2: #c3cede;
+    --muted: #8f9db4;
+    --on-inverse: #0f172a;
+    --on-inverse-muted: #334155;
+    --primary: #4f8bff;
+    --primary-hover: #6b9dff;
+    --primary-soft: #16264a;
+    --primary-soft-border: #26407a;
+    --primary-text: #8fb4ff;
+    --accent-soft: #3a2413;
+    --success-soft: #0f2a1d;
+    --success-text: #6ee7a0;
+    --success-border: #1d4a33;
+    --danger: #ef4444;
+    --danger-hover: #f87171;
+    --danger-soft: #331418;
+    --danger-text: #fca5a5;
+    --danger-border: #5c2129;
+    --warning-soft: #33250c;
+    --warning-text: #fcd34d;
+    --warning-border: #5a4214;
+    --info-soft: #132443;
+    --info-text: #93c5fd;
+    --info-border: #24406e;
+    --purple-soft: #241a45;
+    --purple-text: #c4b5fd;
+    --cyan-soft: #0e2a33;
+    --cyan-text: #67e8f9;
+    --gray-soft: #1d2944;
+    --gray-text: #c3cede;
+    --gold-soft: #3a3010;
+    --silver-soft: #1d2944;
+    --bronze-soft: #3a2010;
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.25);
+    --shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
+}

@@ -53,3 +53,71 @@ if (!function_exists('old')) {
         return e((string) ($old[$key] ?? $default));
     }
 }
+
+if (!function_exists('icon')) {
+    /**
+     * Inline SVG icon from the sprite in views/partials/icons.php.
+     * Decorative by default (aria-hidden); pass $label for a meaningful icon.
+     */
+    function icon(string $name, string $class = '', ?string $label = null): string
+    {
+        $classes = trim('icon ' . $class);
+        $a11y = $label !== null && $label !== ''
+            ? 'role="img" aria-label="' . e($label) . '"'
+            : 'aria-hidden="true" focusable="false"';
+
+        return '<svg class="' . e($classes) . '" ' . $a11y . '><use href="#i-' . e($name) . '"></use></svg>';
+    }
+}
+
+if (!function_exists('asset')) {
+    /** Public asset URL with a cache-busting version from its modification time. */
+    function asset(string $path): string
+    {
+        $path = '/' . ltrim($path, '/');
+        $file = dirname(__DIR__, 2) . '/public' . $path;
+        $version = is_file($file) ? (string) filemtime($file) : '1';
+        return e($path . '?v=' . $version);
+    }
+}
+
+if (!function_exists('current_path')) {
+    /** Path of the current request without query string, normalised (no trailing slash). */
+    function current_path(): string
+    {
+        $path = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+        $path = '/' . trim($path, '/');
+        return $path;
+    }
+}
+
+if (!function_exists('nav_current')) {
+    /**
+     * Returns ' aria-current="page"' when $href is the active section.
+     * '/' matches only the home page; other hrefs match themselves and sub-paths.
+     */
+    function nav_current(string $href, ?string $path = null): string
+    {
+        $path ??= current_path();
+        $href = '/' . trim($href, '/');
+
+        $active = $href === '/'
+            ? $path === '/'
+            : ($path === $href || str_starts_with($path, $href . '/'));
+
+        return $active ? ' aria-current="page"' : '';
+    }
+}
+
+if (!function_exists('initials')) {
+    /** Up to two uppercase initials for avatars ("Ana María Pérez" -> "AM"). */
+    function initials(?string $name): string
+    {
+        $parts = preg_split('/\s+/u', trim((string) $name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $letters = '';
+        foreach (array_slice($parts, 0, 2) as $part) {
+            $letters .= mb_strtoupper(mb_substr($part, 0, 1));
+        }
+        return $letters !== '' ? $letters : '?';
+    }
+}

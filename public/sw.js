@@ -6,7 +6,7 @@
  *  - HTML, CSS y JS: network-first (siempre frescos online; caché solo como respaldo offline).
  *    OJO: cache-first sobre el CSS deja la pantalla con estilos viejos tras cada deploy.
  */
-const CACHE = 'pingpong-v2';
+const CACHE = 'pingpong-v3';
 const ASSETS = [
     '/assets/icons/icon-192.png',
     '/assets/icons/icon-512.png',

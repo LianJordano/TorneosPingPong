@@ -42,7 +42,7 @@ enum EstadoTorneo: string
         return match ($this) {
             self::BORRADOR            => 'badge--gray',
             self::INSCRIPCION_ABIERTA => 'badge--green',
-            self::INSCRIPCION_CERRADA => 'badge--blue',
+            self::INSCRIPCION_CERRADA => 'badge--amber',
             self::FASE_LIGA           => 'badge--blue',
             self::FASE_ELIMINATORIA   => 'badge--purple',
             self::FINALIZADO          => 'badge--dark',
