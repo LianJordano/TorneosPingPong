@@ -13,17 +13,9 @@ $puesto = [1 => 'Campeón', 2 => 'Subcampeón', 3 => 'Tercer puesto'];
 $medalla = [1 => 'Medalla de oro', 2 => 'Medalla de plata', 3 => 'Medalla de bronce'];
 $fmtMonto = static fn ($m): string => '$' . number_format((float) $m, 2);
 
-// Tournament sub-navigation (same tabs as the hub).
 $estado = (string) $torneo['estado'];
 $conLiga = !in_array($estado, [EstadoTorneo::BORRADOR->value, EstadoTorneo::INSCRIPCION_ABIERTA->value, EstadoTorneo::INSCRIPCION_CERRADA->value], true);
 $conBracket = $conLiga && $estado !== EstadoTorneo::FASE_LIGA->value;
-$tabs = [
-    ['href' => "/torneos/{$tid}", 'label' => 'Resumen', 'icon' => 'home', 'ok' => true, 'actual' => false],
-    ['href' => "/torneos/{$tid}/partidos", 'label' => 'Partidos', 'icon' => 'paddle', 'ok' => $conLiga, 'actual' => false],
-    ['href' => "/torneos/{$tid}/tabla", 'label' => 'Tabla', 'icon' => 'table', 'ok' => $conLiga, 'actual' => false],
-    ['href' => "/torneos/{$tid}/bracket", 'label' => 'Llaves', 'icon' => 'bracket', 'ok' => $conBracket, 'actual' => false],
-    ['href' => "/torneos/{$tid}/podio", 'label' => 'Podio', 'icon' => 'podium', 'ok' => $conBracket, 'actual' => true],
-];
 ?>
 <nav aria-label="Ruta" class="no-print">
     <ol class="breadcrumbs">
@@ -53,15 +45,7 @@ $tabs = [
     <?php endif; ?>
 </header>
 
-<nav class="tabs no-print" aria-label="Secciones del torneo">
-    <?php foreach ($tabs as $tab): ?>
-        <?php if ($tab['ok'] || $tab['actual']): ?>
-            <a class="tabs__link" href="<?= e($tab['href']) ?>"<?= $tab['actual'] ? ' aria-current="page"' : '' ?>><?= icon($tab['icon']) ?> <?= e($tab['label']) ?></a>
-        <?php else: ?>
-            <span class="tabs__link is-disabled" aria-disabled="true" title="Disponible más adelante"><?= icon($tab['icon']) ?> <?= e($tab['label']) ?></span>
-        <?php endif; ?>
-    <?php endforeach; ?>
-</nav>
+<?php $tabActual = 'podio'; require __DIR__ . '/../partials/torneo-tabs.php'; ?>
 
 <?php if (!$finalizado && $podio !== []): ?>
     <div class="flash flash--warning no-print">

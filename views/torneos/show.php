@@ -22,7 +22,6 @@ $totalInscritos = count($inscripciones);
 $pagados = count(array_filter($inscripciones, static fn (array $i): bool => (int) $i['pago_realizado'] === 1));
 
 $enLigaOmas = in_array($estado, [EstadoTorneo::FASE_LIGA, EstadoTorneo::FASE_ELIMINATORIA, EstadoTorneo::FINALIZADO], true);
-$enBracket = in_array($estado, [EstadoTorneo::FASE_ELIMINATORIA, EstadoTorneo::FINALIZADO], true);
 $muestraPublica = $enLigaOmas || $estado === EstadoTorneo::INSCRIPCION_CERRADA;
 $hayParejasFormadas = array_filter($inscripciones, static fn (array $i): bool => !empty($i['persona_id_2'])) !== [];
 $muestraParejas = $esParejaManual || ($esDobles && $hayParejasFormadas);
@@ -119,19 +118,6 @@ $puedeCancelar = in_array(EstadoTorneo::CANCELADO, $transiciones, true);
 $fixtureConfirm = '¿Generar el fixture round-robin y comenzar la liga? No se podrán editar las inscripciones después.';
 $sorteoConfirm = '¿Sortear las parejas al azar entre los inscritos individuales?';
 
-$tabs = [['href' => $base, 'label' => 'Resumen', 'icon' => 'home', 'current' => true]];
-if ($enLigaOmas) {
-    $tabs[] = ['href' => $base . '/partidos', 'label' => 'Partidos', 'icon' => 'scoreboard'];
-    $tabs[] = ['href' => $base . '/tabla', 'label' => 'Tabla', 'icon' => 'table'];
-}
-if ($enBracket) {
-    $tabs[] = ['href' => $base . '/bracket', 'label' => 'Bracket', 'icon' => 'bracket'];
-    $tabs[] = ['href' => $base . '/podio', 'label' => 'Podio', 'icon' => 'podium'];
-}
-if ($puedeGestionar) {
-    $tabs[] = ['href' => $base . '/premios', 'label' => 'Premios', 'icon' => 'gift'];
-    $tabs[] = ['href' => $base . '/auditoria', 'label' => 'Auditoría', 'icon' => 'history'];
-}
 ?>
 <nav aria-label="Ruta">
     <ol class="breadcrumbs">
@@ -201,11 +187,7 @@ if ($puedeGestionar) {
     </div>
 </header>
 
-<nav class="tabs" aria-label="Secciones del torneo">
-    <?php foreach ($tabs as $tab): ?>
-        <a class="tabs__link" href="<?= e($tab['href']) ?>"<?= !empty($tab['current']) ? ' aria-current="page"' : '' ?>><?= icon($tab['icon']) ?> <?= e($tab['label']) ?></a>
-    <?php endforeach; ?>
-</nav>
+<?php $tabActual = 'resumen'; require __DIR__ . '/../partials/torneo-tabs.php'; ?>
 
 <div class="torneo-hub">
     <section class="card" id="inscripciones" aria-labelledby="inscripciones-titulo">

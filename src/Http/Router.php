@@ -14,6 +14,15 @@ final class Router
     /** @var list<array{method:string,regex:string,params:list<string>,handler:callable}> */
     private array $routes = [];
 
+    /** @var (callable(int):string)|null Renders 404/405 pages; plain text when not set. */
+    private $fallback = null;
+
+    /** @param callable(int):string $handler receives the HTTP status (404 or 405) */
+    public function fallback(callable $handler): void
+    {
+        $this->fallback = $handler;
+    }
+
     public function get(string $path, callable $handler): void
     {
         $this->add('GET', $path, $handler);
@@ -70,7 +79,14 @@ final class Router
             return;
         }
 
-        http_response_code($pathMatchedOtherMethod ? 405 : 404);
+        $status = $pathMatchedOtherMethod ? 405 : 404;
+        http_response_code($status);
+
+        if ($this->fallback !== null) {
+            echo ($this->fallback)($status);
+            return;
+        }
+
         echo $pathMatchedOtherMethod
             ? '405 — Método no permitido.'
             : '404 — Ruta no encontrada.';

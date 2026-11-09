@@ -2,7 +2,6 @@
 /** @var array<string,mixed> $torneo */
 /** @var list<array<string,mixed>> $registros */
 
-use PingPong\Domain\EstadoTorneo;
 
 $tid = (string) $torneo['id'];
 $base = '/torneos/' . $tid;
@@ -56,20 +55,6 @@ $fechaHora = static function (?string $valor): string {
     return $ts === false ? (string) $valor : date('d/m/Y H:i', $ts);
 };
 
-$estado = EstadoTorneo::from($torneo['estado']);
-$enLigaOmas = in_array($estado, [EstadoTorneo::FASE_LIGA, EstadoTorneo::FASE_ELIMINATORIA, EstadoTorneo::FINALIZADO], true);
-$enBracket = in_array($estado, [EstadoTorneo::FASE_ELIMINATORIA, EstadoTorneo::FINALIZADO], true);
-$tabs = [['href' => $base, 'label' => 'Resumen', 'icon' => 'home']];
-if ($enLigaOmas) {
-    $tabs[] = ['href' => $base . '/partidos', 'label' => 'Partidos', 'icon' => 'scoreboard'];
-    $tabs[] = ['href' => $base . '/tabla', 'label' => 'Tabla', 'icon' => 'table'];
-}
-if ($enBracket) {
-    $tabs[] = ['href' => $base . '/bracket', 'label' => 'Bracket', 'icon' => 'bracket'];
-    $tabs[] = ['href' => $base . '/podio', 'label' => 'Podio', 'icon' => 'podium'];
-}
-$tabs[] = ['href' => $base . '/premios', 'label' => 'Premios', 'icon' => 'gift'];
-$tabs[] = ['href' => $base . '/auditoria', 'label' => 'Auditoría', 'icon' => 'history', 'current' => true];
 ?>
 <nav aria-label="Ruta">
     <ol class="breadcrumbs">
@@ -88,11 +73,7 @@ $tabs[] = ['href' => $base . '/auditoria', 'label' => 'Auditoría', 'icon' => 'h
     <span class="badge badge--gray"><?= icon('history') ?> <?= e((string) $total) ?> <?= $total === 1 ? 'registro' : 'registros' ?></span>
 </header>
 
-<nav class="tabs" aria-label="Secciones del torneo">
-    <?php foreach ($tabs as $tab): ?>
-        <a class="tabs__link" href="<?= e($tab['href']) ?>"<?= !empty($tab['current']) ? ' aria-current="page"' : '' ?>><?= icon($tab['icon']) ?> <?= e($tab['label']) ?></a>
-    <?php endforeach; ?>
-</nav>
+<?php $tabActual = 'auditoria'; require __DIR__ . '/../partials/torneo-tabs.php'; ?>
 
 <?php if ($registros === []): ?>
     <div class="empty-state">

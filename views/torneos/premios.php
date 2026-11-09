@@ -5,7 +5,6 @@
 /** @var array<int,string> $errores */
 /** @var array<int,mixed> $old */
 
-use PingPong\Domain\EstadoTorneo;
 
 $errores = $errores ?? [];
 $old = $old ?? [];
@@ -22,20 +21,6 @@ $ordinal = static fn (int $pos): string => $pos . '°';
 $dinero = static fn (float $n): string => '$' . number_format($n, 2);
 $pozoFijo = !empty($torneo['pozo_total']);
 
-$estado = EstadoTorneo::from($torneo['estado']);
-$enLigaOmas = in_array($estado, [EstadoTorneo::FASE_LIGA, EstadoTorneo::FASE_ELIMINATORIA, EstadoTorneo::FINALIZADO], true);
-$enBracket = in_array($estado, [EstadoTorneo::FASE_ELIMINATORIA, EstadoTorneo::FINALIZADO], true);
-$tabs = [['href' => $base, 'label' => 'Resumen', 'icon' => 'home']];
-if ($enLigaOmas) {
-    $tabs[] = ['href' => $base . '/partidos', 'label' => 'Partidos', 'icon' => 'scoreboard'];
-    $tabs[] = ['href' => $base . '/tabla', 'label' => 'Tabla', 'icon' => 'table'];
-}
-if ($enBracket) {
-    $tabs[] = ['href' => $base . '/bracket', 'label' => 'Bracket', 'icon' => 'bracket'];
-    $tabs[] = ['href' => $base . '/podio', 'label' => 'Podio', 'icon' => 'podium'];
-}
-$tabs[] = ['href' => $base . '/premios', 'label' => 'Premios', 'icon' => 'gift', 'current' => true];
-$tabs[] = ['href' => $base . '/auditoria', 'label' => 'Auditoría', 'icon' => 'history'];
 ?>
 <nav aria-label="Ruta">
     <ol class="breadcrumbs">
@@ -53,11 +38,7 @@ $tabs[] = ['href' => $base . '/auditoria', 'label' => 'Auditoría', 'icon' => 'h
     </div>
 </header>
 
-<nav class="tabs" aria-label="Secciones del torneo">
-    <?php foreach ($tabs as $tab): ?>
-        <a class="tabs__link" href="<?= e($tab['href']) ?>"<?= !empty($tab['current']) ? ' aria-current="page"' : '' ?>><?= icon($tab['icon']) ?> <?= e($tab['label']) ?></a>
-    <?php endforeach; ?>
-</nav>
+<?php $tabActual = 'premios'; require __DIR__ . '/../partials/torneo-tabs.php'; ?>
 
 <div class="stats stats--compact">
     <div class="stat">

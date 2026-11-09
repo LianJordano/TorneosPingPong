@@ -10,6 +10,7 @@ use PingPong\Controller\ConfiguracionController;
 use PingPong\Controller\CuentaController;
 use PingPong\Controller\DashboardController;
 use PingPong\Controller\EliminatoriaController;
+use PingPong\Controller\ErrorController;
 use PingPong\Controller\InscripcionController;
 use PingPong\Controller\LigaController;
 use PingPong\Controller\PersonaController;
@@ -88,6 +89,8 @@ $usuariosCtl = new UsuarioController($view, $usuarios);
 
 // --- Rutas ---
 $router = new Router();
+$errorCtl = new ErrorController($view);
+$router->fallback(static fn (int $status): string => $errorCtl->show($status));
 
 // Autenticación
 $router->get('/login',  static fn (): string => $auth->showLogin());
