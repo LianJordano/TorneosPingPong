@@ -1,7 +1,12 @@
 <?php
 /** @var array<string,mixed> $torneo */
 /** @var list<array<string,mixed>> $registros */
+
+use PingPong\Domain\EstadoTorneo;
+
 $tid = (string) $torneo['id'];
+$base = '/torneos/' . $tid;
+$total = count($registros);
 
 $accionLabel = static fn (string $a): string => match ($a) {
     'CARGAR_MARCADOR' => 'Carga de marcador',
@@ -11,6 +16,22 @@ $accionLabel = static fn (string $a): string => match ($a) {
     'GENERAR_BRACKET' => 'Generación de bracket',
     'ELIMINAR'        => 'Eliminación',
     default           => $a,
+};
+$accionBadge = static fn (string $a): string => match ($a) {
+    'EDITAR_MARCADOR' => 'badge--amber',
+    'CAMBIO_ESTADO'   => 'badge--purple',
+    'GENERAR_FIXTURE', 'GENERAR_BRACKET' => 'badge--cyan',
+    'ELIMINAR'        => 'badge--red',
+    default           => 'badge--blue',
+};
+$accionIcono = static fn (string $a): string => match ($a) {
+    'CARGAR_MARCADOR' => 'scoreboard',
+    'EDITAR_MARCADOR' => 'edit',
+    'CAMBIO_ESTADO'   => 'refresh',
+    'GENERAR_FIXTURE' => 'shuffle',
+    'GENERAR_BRACKET' => 'bracket',
+    'ELIMINAR'        => 'trash',
+    default           => 'history',
 };
 
 $resumenJson = static function (?string $json): string {
@@ -30,45 +51,81 @@ $resumenJson = static function (?string $json): string {
     }
     return implode(' · ', $partes);
 };
-?>
-<section class="page-head page-head--hero">
-    <div class="hero-grid">
-        <div>
-            <span class="eyebrow">Audit trail</span>
-            <h1>Auditoría · <?= e($torneo['nombre']) ?></h1>
-            <p class="muted">Historial sensible de cambios con mejor lectura para revisión y control.</p>
-        </div>
-        <div class="hero-side">
-            <div class="hero-card">
-                <span class="hero-card__label">Registros</span>
-                <strong><?= e((string) count($registros)) ?></strong>
-                <small>Eventos de operación y trazabilidad.</small>
-            </div>
-            <div class="actions"><a class="btn btn--ghost btn--sm" href="/torneos/<?= e($tid) ?>">Volver</a></div>
-        </div>
-    </div>
-</section>
+$fechaHora = static function (?string $valor): string {
+    $ts = $valor ? strtotime($valor) : false;
+    return $ts === false ? (string) $valor : date('d/m/Y H:i', $ts);
+};
 
-<section class="card">
-    <?php if ($registros === []): ?>
-        <p class="muted">Todavía no hay registros de auditoría para este torneo.</p>
-    <?php else: ?>
-        <div class="audit-list">
-            <?php foreach ($registros as $r): ?>
-                <article class="audit-item">
-                    <div class="audit-item__head">
-                        <div>
-                            <strong><?= e($r['usuario']) ?></strong>
-                            <div class="audit-item__meta"><?= e($r['entidad']) ?> #<?= e((string) $r['entidad_id']) ?> · <?= e($r['created_at']) ?></div>
+$estado = EstadoTorneo::from($torneo['estado']);
+$enLigaOmas = in_array($estado, [EstadoTorneo::FASE_LIGA, EstadoTorneo::FASE_ELIMINATORIA, EstadoTorneo::FINALIZADO], true);
+$enBracket = in_array($estado, [EstadoTorneo::FASE_ELIMINATORIA, EstadoTorneo::FINALIZADO], true);
+$tabs = [['href' => $base, 'label' => 'Resumen', 'icon' => 'home']];
+if ($enLigaOmas) {
+    $tabs[] = ['href' => $base . '/partidos', 'label' => 'Partidos', 'icon' => 'scoreboard'];
+    $tabs[] = ['href' => $base . '/tabla', 'label' => 'Tabla', 'icon' => 'table'];
+}
+if ($enBracket) {
+    $tabs[] = ['href' => $base . '/bracket', 'label' => 'Bracket', 'icon' => 'bracket'];
+    $tabs[] = ['href' => $base . '/podio', 'label' => 'Podio', 'icon' => 'podium'];
+}
+$tabs[] = ['href' => $base . '/premios', 'label' => 'Premios', 'icon' => 'gift'];
+$tabs[] = ['href' => $base . '/auditoria', 'label' => 'Auditoría', 'icon' => 'history', 'current' => true];
+?>
+<nav aria-label="Ruta">
+    <ol class="breadcrumbs">
+        <li><a href="/torneos">Torneos</a></li>
+        <li><a href="<?= e($base) ?>"><?= e($torneo['nombre']) ?></a></li>
+        <li><span aria-current="page">Auditoría</span></li>
+    </ol>
+</nav>
+
+<header class="page-head">
+    <div>
+        <span class="eyebrow"><?= e($torneo['nombre']) ?></span>
+        <h1>Auditoría</h1>
+        <p>Historial de cambios sensibles del torneo: quién hizo qué, cuándo y con qué valores antes y después.</p>
+    </div>
+    <span class="badge badge--gray"><?= icon('history') ?> <?= e((string) $total) ?> <?= $total === 1 ? 'registro' : 'registros' ?></span>
+</header>
+
+<nav class="tabs" aria-label="Secciones del torneo">
+    <?php foreach ($tabs as $tab): ?>
+        <a class="tabs__link" href="<?= e($tab['href']) ?>"<?= !empty($tab['current']) ? ' aria-current="page"' : '' ?>><?= icon($tab['icon']) ?> <?= e($tab['label']) ?></a>
+    <?php endforeach; ?>
+</nav>
+
+<?php if ($registros === []): ?>
+    <div class="empty-state">
+        <span class="empty-state__icon"><?= icon('history') ?></span>
+        <p class="empty-state__title">Sin registros todavía</p>
+        <p>Acá vas a ver las cargas y ediciones de marcadores, los cambios de estado y la generación del fixture y del bracket.</p>
+    </div>
+<?php else: ?>
+    <ol class="audit-list">
+        <?php foreach ($registros as $r): ?>
+            <li class="audit-item">
+                <span class="audit-item__icon"><?= icon($accionIcono($r['accion'])) ?></span>
+                <article class="card audit-item__card">
+                    <header class="audit-item__head">
+                        <span class="badge badge--dot <?= e($accionBadge($r['accion'])) ?>"><?= e($accionLabel($r['accion'])) ?></span>
+                        <time class="muted small" datetime="<?= e((string) $r['created_at']) ?>"><?= e($fechaHora($r['created_at'])) ?></time>
+                    </header>
+                    <p class="audit-item__who">
+                        <span class="strong"><?= e($r['usuario']) ?></span>
+                        <span class="muted small">· <?= e($r['entidad']) ?> #<?= e((string) $r['entidad_id']) ?></span>
+                    </p>
+                    <dl class="audit-diff">
+                        <div class="audit-diff__box">
+                            <dt>Antes</dt>
+                            <dd class="muted"><?= e($resumenJson($r['valor_anterior'])) ?></dd>
                         </div>
-                        <span class="badge badge--blue"><?= e($accionLabel($r['accion'])) ?></span>
-                    </div>
-                    <div class="audit-item__grid">
-                        <div class="audit-box"><strong>Antes</strong><span class="small muted"><?= e($resumenJson($r['valor_anterior'])) ?></span></div>
-                        <div class="audit-box"><strong>Después</strong><span class="small"><?= e($resumenJson($r['valor_nuevo'])) ?></span></div>
-                    </div>
+                        <div class="audit-diff__box audit-diff__box--new">
+                            <dt>Después</dt>
+                            <dd><?= e($resumenJson($r['valor_nuevo'])) ?></dd>
+                        </div>
+                    </dl>
                 </article>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
-</section>
+            </li>
+        <?php endforeach; ?>
+    </ol>
+<?php endif; ?>

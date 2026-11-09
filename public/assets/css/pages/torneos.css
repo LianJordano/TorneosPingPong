@@ -1,1 +1,274 @@
-/* torneos module styles — see docs/frontend.md */
+/* Tournament management: list, form, hub, prizes, audit — see docs/frontend.md */
+
+/* ---------- List (torneos/index) ---------- */
+.torneos-toolbar { justify-content: space-between; }
+.torneos-toolbar .tabs { margin: 0; }
+.torneos-count { margin: 0; }
+
+.torneos-modalidad {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: var(--sp-2);
+    text-align: left;
+}
+
+.torneos-modalidad > .icon { margin-top: 3px; color: var(--muted); }
+
+/* ---------- Form (torneos/form) ---------- */
+.torneo-form { padding-bottom: 0; }
+
+.torneo-form .fieldset { margin-bottom: 0; padding-bottom: var(--sp-6); }
+
+.torneo-form .fieldset + .fieldset {
+    padding-top: var(--sp-6);
+    border-top: 1px solid var(--border);
+}
+
+.torneo-form .form-actions { margin-top: 0; }
+
+@media (min-width: 720px) {
+    .torneo-form .form-actions--sticky {
+        margin-inline: calc(var(--sp-6) * -1);
+        padding-inline: var(--sp-6);
+    }
+}
+
+/* ---------- Hub (torneos/show) ---------- */
+.torneo-hero h1 { margin: var(--sp-1) 0 0; font-size: var(--fs-2xl); overflow-wrap: anywhere; }
+
+@media (min-width: 720px) {
+    .torneo-hero h1 { font-size: var(--fs-3xl); }
+}
+
+.torneo-next { display: grid; gap: var(--sp-3); justify-items: start; }
+.torneo-next > p { margin: 0; }
+.torneo-next form { width: 100%; }
+
+.torneo-hub { display: grid; gap: var(--sp-5); align-items: start; }
+.torneo-hub > .card,
+.torneo-hub__side > .card:last-child { margin-bottom: 0; }
+.torneo-hub__side { display: grid; gap: var(--sp-5); }
+
+@media (min-width: 1024px) {
+    .torneo-hub { grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); }
+}
+
+.torneo-insc__meta { margin: var(--sp-1) 0 0; }
+.torneo-insc__progress { margin-bottom: var(--sp-5); }
+.torneo-insc__panel .field { margin-bottom: 0; }
+.torneo-insc__actions { margin-top: var(--sp-4); }
+
+.torneo-insc__empty {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0;
+}
+
+#inscripciones .hint { margin: 0 0 var(--sp-4); }
+
+.torneo-manage { margin-top: var(--sp-4); }
+#gestion-titulo + .hint { margin-top: var(--sp-4); }
+
+.torneo-danger {
+    margin-top: var(--sp-5);
+    padding-top: var(--sp-4);
+    border-top: 1px dashed var(--danger-border);
+}
+
+.torneo-danger__title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0 0 var(--sp-3);
+    color: var(--danger-text);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+}
+
+/* Payment toggle: switch track + text state, keeps a 40px touch target. */
+.pay-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 40px;
+    padding: 0 var(--sp-3) 0 var(--sp-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--text-2);
+    font: inherit;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.pay-toggle:hover { border-color: var(--muted); background: var(--surface-2); }
+.pay-toggle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.pay-toggle__track {
+    position: relative;
+    width: 34px;
+    height: 20px;
+    flex: none;
+    border-radius: var(--r-pill);
+    background: var(--surface-3);
+    border: 1px solid var(--border-strong);
+    transition: background var(--dur) var(--ease);
+}
+
+.pay-toggle__thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--muted);
+    box-shadow: var(--shadow-xs);
+    transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.pay-toggle.is-paid {
+    border-color: var(--success-border);
+    background: var(--success-soft);
+    color: var(--success-text);
+}
+
+.pay-toggle.is-paid .pay-toggle__track { background: var(--success); border-color: var(--success); }
+.pay-toggle.is-paid .pay-toggle__thumb { transform: translateX(14px); background: var(--surface); }
+
+/* ---------- Prizes (torneos/premios) ---------- */
+.premios-form .card__footer { margin-top: 0; padding: var(--sp-4) var(--sp-5); }
+
+.premio-pos { display: inline-flex; align-items: center; gap: var(--sp-2); font-weight: 700; }
+.premio-pos .icon { color: var(--warning); }
+
+.premio-input {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    max-width: 160px;
+}
+
+.premio-input input {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.5rem 2rem 0.5rem 0.85rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r);
+    background: var(--bg-elevated);
+    color: var(--text);
+    font: inherit;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.premio-input input:focus { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
+.premio-input input[aria-invalid="true"] { border-color: var(--danger); }
+
+.premio-input__suffix {
+    position: absolute;
+    right: 0.75rem;
+    color: var(--muted);
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.premios-form td .field__error { margin: var(--sp-1) 0 0; }
+
+@media (max-width: 719px) {
+    .premios-form td[data-label="Porcentaje"] { flex-wrap: wrap; }
+    .premio-input { max-width: 140px; }
+}
+
+/* ---------- Audit (torneos/auditoria) ---------- */
+.audit-list {
+    position: relative;
+    display: grid;
+    gap: var(--sp-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Timeline rail */
+.audit-list::before {
+    content: "";
+    position: absolute;
+    top: var(--sp-4);
+    bottom: var(--sp-4);
+    left: 17px;
+    width: 2px;
+    background: var(--border);
+}
+
+.audit-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: var(--sp-3);
+    align-items: start;
+}
+
+.audit-item__icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    margin-top: var(--sp-3);
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--primary);
+}
+
+.audit-item__card { margin-bottom: 0; padding: var(--sp-4); }
+
+.audit-item__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+
+.audit-item__who { margin: var(--sp-2) 0 var(--sp-3); }
+
+.audit-diff {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+}
+
+@media (min-width: 720px) {
+    .audit-diff { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .audit-item__card { padding: var(--sp-5); }
+}
+
+.audit-diff__box {
+    padding: var(--sp-3);
+    border-radius: var(--r);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+}
+
+.audit-diff__box--new { background: var(--primary-soft); border-color: var(--primary-soft-border); }
+
+.audit-diff dt {
+    margin-bottom: var(--sp-1);
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.audit-diff dd {
+    margin: 0;
+    font-size: var(--fs-sm);
+    overflow-wrap: anywhere;
+}
