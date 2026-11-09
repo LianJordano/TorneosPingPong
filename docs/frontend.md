@@ -99,6 +99,7 @@ Page header
 - Theme toggle: any element with `data-theme-toggle`.
 - Install app: `#btn-instalar` or `[data-install-app]` (kept `hidden` until the browser offers install).
 - Flash close: `data-dismiss="flash"`.
+- Print: `data-print` on a button calls `window.print()` (no inline onclick).
 
 ## Preserved hooks (do not rename)
 

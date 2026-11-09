@@ -773,6 +773,10 @@ input[type="radio"] {
     border-top: 1px solid var(--border);
 }
 
+@media (max-width: 719px) {
+    body.has-tabbar .form-actions--sticky { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
+}
+
 .inline,
 form.inline { display: inline; }
 
