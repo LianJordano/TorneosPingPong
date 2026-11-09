@@ -23,7 +23,7 @@ Branch: `feature/frontend-ux-redesign` (from `develop`). Delivery: ask-on-risk. 
 | T4 | S2-S5 | Players & ranking: personas/index, form, show, ranking/index + `pages/jugadores.css` | delegated (parallel) | done | 806e364 |
 | T5 | S2-S5 | Admin & misc: dashboard, auth/login, configuracion/index, usuarios, catalogos/index, cuenta/password, glosario, error + `pages/admin.css` | delegated (parallel) | done | e32b303 |
 | T6 | S2-S6 | Public board: publico/ver, no-disponible, `layout-public.php`, PublicoController layout + `pages/publico.css` | delegated (parallel) | done | c3ed904 |
-| T7 | S2-S6 | Seam: remove legacy app.css, full suite, HTTP smoke of every route, independent verifier (Risk item 6: no tests cover views) | inline + verifier | in progress (verifier running) | 11f9b61 |
+| T7 | S2-S6 | Seam: remove legacy app.css, full suite, HTTP smoke of every route, independent verifier (Risk item 6: no tests cover views) | inline + verifier | done (verifier: no blockers) | 11f9b61, 17b6261 |
 
 ## Log
 
@@ -33,3 +33,4 @@ Branch: `feature/frontend-ux-redesign` (from `develop`). Delivery: ask-on-risk. 
 - L4 T1 committed 23dc5f6 (design system core, shell, icons, app.js, docs/frontend.md, helpers + ViewHelpersTest; tests written alongside the helpers, not RED-first). T2-T6 writers launched in parallel with disjoint surfaces; legacy app.css still on disk but no longer loaded.
 - L5 Writers T2-T6 done; each reported php -l OK, phpunit OK, curl GET smoke 200 without PHP warnings; parent spot-checked one page per unit. Core follow-ups applied by parent: pagination inline-flex + .pagination__gap, sticky form-actions above tabbar, data-print hook.
 - L6 T7 seam (11f9b61): shared views/partials/torneo-tabs.php replaces 7 duplicated tab blocks (disabled tabs shown for later phases; Premios/Auditoría for managers only); Router::fallback + ErrorController render the designed 404/405 page (RouterTest RED→GREEN, suite 66 OK); legacy app.css removed; GET smoke of all routes: 200/302 expected, 0 PHP warnings; `*.csv` 404 is PHP built-in server static-file handling (pre-existing, works under Apache). Browser check: dashboard, hub, marcador in light/dark OK. Independent verifier launched (Risk item 6).
+- L7 Verifier: S1-S4, S6 met; S5 met by markup/CSS, not tested at real 360px. No blockers. Advisories: unstyled medal-icon/podio__step fixed in 17b6261; Premios/Auditoría tabs now visible to managers in every state (intentional, adds reachability); hero gradients use fixed colors by design; inscription-state branches and .check-jugador verified by code reading only (no such data locally). Pending: merge/push is the user decision.
