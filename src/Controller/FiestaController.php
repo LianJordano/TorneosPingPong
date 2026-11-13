@@ -23,7 +23,6 @@ final class FiestaController extends Controller
 {
     private const MODALIDADES = ['INDIVIDUAL', 'DOBLES'];
     private const FORMATOS = [SorteoFiesta::ELIMINACION, SorteoFiesta::GRUPOS];
-    private const MAX_NOMBRE = 80;
 
     public function __construct(
         View $view,
@@ -49,7 +48,10 @@ final class FiestaController extends Controller
         if (($guard = $this->requireGestion()) !== null) {
             return $guard;
         }
-        return $this->render('fiesta/form', ['title' => 'Nueva fiesta']);
+        return $this->render('fiesta/form', [
+            'title'       => 'Nueva fiesta',
+            'disponibles' => $this->fiestas->jugadoresActivos(),
+        ]);
     }
 
     public function store(): string
@@ -64,16 +66,17 @@ final class FiestaController extends Controller
         [$data, $errors] = $this->leerConfig();
         if ($errors !== []) {
             return $this->render('fiesta/form', [
-                'title'  => 'Nueva fiesta',
-                'errors' => $errors,
-                'old'    => $data + ['participantes' => (string) Request::post('participantes', '')],
+                'title'       => 'Nueva fiesta',
+                'errors'      => $errors,
+                'old'         => $data + ['persona_ids' => Request::postIntArray('persona_ids')],
+                'disponibles' => $this->fiestas->jugadoresActivos(),
             ]);
         }
 
         $id = $this->fiestas->create($data, Auth::user()['id'] ?? null);
-        $nombres = $this->leerNombres((string) Request::post('participantes', ''));
-        if ($nombres !== []) {
-            $this->fiestas->agregarParticipantes($id, $nombres);
+        $personaIds = Request::postIntArray('persona_ids');
+        if ($personaIds !== []) {
+            $this->fiestas->agregarParticipantes($id, $personaIds);
         }
         $this->auditoria->registrar('fiesta', $id, 'CREAR', Auth::user()['id'] ?? null, null, $data);
 
@@ -121,6 +124,7 @@ final class FiestaController extends Controller
             'title'         => $fiesta['nombre'],
             'fiesta'        => $fiesta,
             'participantes' => $participantes,
+            'disponibles'   => $fiesta['estado'] === 'INSCRIPCION' ? $this->fiestas->disponibles($id) : [],
             'equipos'       => $equiposPorId,
             'grupos'        => $grupos,
             'rondas'        => $rondas,
@@ -157,18 +161,18 @@ final class FiestaController extends Controller
             return $error;
         }
         $id = (int) $fiesta['id'];
-        $nombres = $this->leerNombres((string) Request::post('nombres', ''));
-        if ($nombres === []) {
-            Session::flash('error', 'Escribí al menos un nombre.');
+        $personaIds = Request::postIntArray('persona_ids');
+        if ($personaIds === []) {
+            Session::flash('error', 'Elegí al menos un jugador.');
             return $this->redirect('/fiesta/' . $id . '#participantes');
         }
 
-        $r = $this->fiestas->agregarParticipantes($id, $nombres);
-        $msg = $r['agregados'] === 1 ? '1 participante sumado.' : "{$r['agregados']} participantes sumados.";
-        if ($r['repetidos'] !== []) {
-            $msg .= ' Ya estaban: ' . implode(', ', $r['repetidos']) . '.';
+        $agregados = $this->fiestas->agregarParticipantes($id, $personaIds);
+        if ($agregados === 0) {
+            Session::flash('error', 'Esos jugadores ya estaban anotados o no están activos.');
+        } else {
+            Session::flash('success', $agregados === 1 ? '1 jugador sumado.' : "{$agregados} jugadores sumados.");
         }
-        Session::flash($r['agregados'] > 0 ? 'success' : 'error', $msg);
         return $this->redirect('/fiesta/' . $id . '#participantes');
     }
 
@@ -442,21 +446,6 @@ final class FiestaController extends Controller
             $errors['clasificados_por_grupo'] = 'Los clasificados por grupo van de 1 a 8.';
         }
         return [$data, $errors];
-    }
-
-    /** @return list<string> unique trimmed names from a textarea (one per line or comma separated) */
-    private function leerNombres(string $raw): array
-    {
-        $nombres = [];
-        foreach (preg_split('/[\r\n,;]+/', $raw) ?: [] as $nombre) {
-            $nombre = trim(preg_replace('/\s+/', ' ', $nombre) ?? '');
-            if ($nombre === '') {
-                continue;
-            }
-            $nombre = mb_substr($nombre, 0, self::MAX_NOMBRE);
-            $nombres[mb_strtolower($nombre)] ??= $nombre; // keep the first spelling
-        }
-        return array_values($nombres);
     }
 
     /** @throws \DomainException */

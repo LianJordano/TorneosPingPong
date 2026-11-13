@@ -287,15 +287,17 @@ CREATE TABLE IF NOT EXISTS fiesta (
     CONSTRAINT chk_fiesta_clasificados CHECK (clasificados_por_grupo BETWEEN 1 AND 8)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- fiesta_participante — se registra solo con el nombre
+-- fiesta_participante — jugadores de la plataforma (persona) anotados en la fiesta
 CREATE TABLE IF NOT EXISTS fiesta_participante (
     id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
     fiesta_id   INT UNSIGNED NOT NULL,
-    nombre      VARCHAR(80) NOT NULL,
+    persona_id  INT UNSIGNED NOT NULL,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_fiesta_participante_nombre (fiesta_id, nombre),
-    CONSTRAINT fk_fiesta_participante_fiesta FOREIGN KEY (fiesta_id) REFERENCES fiesta(id) ON DELETE CASCADE
+    UNIQUE KEY uq_fiesta_participante_persona (fiesta_id, persona_id),
+    KEY idx_fiesta_participante_persona (persona_id),
+    CONSTRAINT fk_fiesta_participante_fiesta  FOREIGN KEY (fiesta_id)  REFERENCES fiesta(id)  ON DELETE CASCADE,
+    CONSTRAINT fk_fiesta_participante_persona FOREIGN KEY (persona_id) REFERENCES persona(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- fiesta_equipo — resultado del sorteo: 1 persona (individual) o pareja (dobles)

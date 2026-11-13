@@ -13,7 +13,7 @@ Branch: `feature/torneo-fiesta` · Delivery: ask-on-risk · Runner: `vendor/bin/
 - S6 — UX/UI: "que quede con excelente ux/ui".
 
 Assumptions (defaults chosen by the agent, adjustable):
-- A1 Participants are registered by free-text name (paste one per line), not linked to `persona`.
+- S7 — Participants are platform players: "los participantes son los mismos jugadores de la plataforma como los otros" (replaces old assumption A1, free-text names).
 - A2 Doubles need an even number of participants; draw is blocked otherwise.
 - A3 Groups: N groups, top K per group advance to a single-elimination bracket seeded crosswise (1A vs 2B).
 - A4 Result entry is a simple score (sets or points) per side; higher score wins; no ties.
@@ -26,6 +26,7 @@ Assumptions (defaults chosen by the agent, adjustable):
 - [x] T3 (S1, S4, S5) Repository + controller + routes + nav · inline
 - [x] T4 (S1, S6) Views: list, create, hub (participants, groups, bracket, results) · inline
 - [x] T5 (S3, S6) Roulette stage: JS + CSS animation with tension, replay, auto/manual · inline
+- [x] T6 (S7) Participants from `persona` (FK) with searchable multi-select · inline
 
 ## Log
 
@@ -33,3 +34,4 @@ Assumptions (defaults chosen by the agent, adjustable):
 - L2 (2026-11-13) Clarification: "osea primero aleatoriamente salen las primeras personas , luego las parejas de esas personas" / "per todo aleatorio"
 - L3 (2026-11-13) Correction: "es armar un sistema paralelo torneo fiesta" / "se registran los participantes y se arma" → no reuse of `torneo`/`inscripcion`; only pure domain helpers (`BracketEliminacion`, `FixtureRoundRobin`) are reused.
 - L4 (2026-11-13) Verified: `vendor/bin/phpunit` 82 tests OK (16 new). HTTP E2E on localhost: create → add names (dedupe keeps first spelling) → draw → roulette JSON → groups (tie rejected) → knockout → champion → FINALIZADO; singles 5 players → 8-slot bracket with 3 byes; odd doubles blocked; undo draw; guest redirected to /login. Browser: roulette spins, reveals, skip and end screen with no console errors. QA data deleted.
+- L5 (2026-11-13) User correction: "los participantes son los mismos jugadores de la plataforma como los otros". `fiesta_participante.nombre` replaced by `persona_id` FK (RESTRICT, unique per fiesta); migration edited in place (never shipped; local tables were empty and recreated). Picker reuses the Tom Select pattern of tournament registration. Verified over HTTP: 13 active players listed; duplicate and unknown ids ignored; added players leave the selector; roulette shows real names (trimmed). phpunit 82 OK.

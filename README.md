@@ -117,6 +117,10 @@ El código fuera de `public/` **no** es accesible directamente por el navegador.
 | `partido_set`        | Marcador set por set de un partido.                                |
 | `premio_config`      | Distribución del premio por posición.                              |
 | `registro_auditoria` | Bitácora de cambios sensibles (quién / qué / cuándo / antes-después).|
+| `fiesta`             | Torneo fiesta (sistema paralelo): formato, estado y guion de la ruleta. |
+| `fiesta_participante`| Jugador de la plataforma (`persona`) anotado en una fiesta.        |
+| `fiesta_equipo`      | Equipo sorteado (1 jugador o pareja) y su grupo.                    |
+| `fiesta_partido`     | Partidos de grupo y de eliminatoria de la fiesta.                  |
 
 **Ciclo de vida del torneo:**
 `BORRADOR → INSCRIPCION_ABIERTA → INSCRIPCION_CERRADA → FASE_LIGA → FASE_ELIMINATORIA → FINALIZADO`

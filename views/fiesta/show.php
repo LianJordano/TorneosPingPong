@@ -1,6 +1,7 @@
 <?php
 /** @var array<string,mixed> $fiesta */
-/** @var list<array{id:int,nombre:string}> $participantes */
+/** @var list<array{id:int,persona_id:int,nombre:string,area:?string}> $participantes */
+/** @var list<array<string,mixed>> $disponibles */
 /** @var array<int,array<string,mixed>> $equipos */
 /** @var array<int,array<string,mixed>> $grupos */
 /** @var array<int,list<array<string,mixed>>> $rondas */
@@ -101,20 +102,21 @@ $resumenEquipos = $dobles
             </div>
 
             <?php if ($puedeGestionar): ?>
-                <form method="post" action="<?= e($base) ?>/participantes" class="fiesta-add">
-                    <?= csrf_field() ?>
-                    <label class="sr-only" for="f-nombres">Nombres</label>
-                    <textarea id="f-nombres" name="nombres" rows="2" placeholder="Escribí un nombre (o pegá varios, uno por línea)" data-fiesta-nombres autofocus></textarea>
-                    <button type="submit" class="btn btn--primary"><?= icon('user-plus') ?> Sumar</button>
-                </form>
-                <p class="field__hint">Enter para sumar · Shift + Enter para otra línea.</p>
+                <?php if ($disponibles === []): ?>
+                    <p class="muted small"><?= icon('info') ?> Ya están anotados todos los jugadores activos.</p>
+                <?php else: ?>
+                    <form method="post" action="<?= e($base) ?>/participantes" class="form-panel">
+                        <?= csrf_field() ?>
+                        <?php $seleccionados = []; $submitLabel = 'Sumar a la fiesta'; require __DIR__ . '/_selector-jugadores.php'; ?>
+                    </form>
+                <?php endif; ?>
             <?php endif; ?>
 
             <?php if ($participantes === []): ?>
                 <div class="empty-state fiesta-empty">
                     <span class="empty-state__icon"><?= icon('users') ?></span>
                     <p class="empty-state__title">Nadie anotado todavía</p>
-                    <p>Sumá a los que van a jugar. Solo hace falta el nombre.</p>
+                    <p>Elegí a los jugadores de la plataforma que van a participar.</p>
                 </div>
             <?php else: ?>
                 <ul class="fiesta-chips">
@@ -183,20 +185,6 @@ $resumenEquipos = $dobles
         </aside>
     </div>
 
-    <?php if ($puedeGestionar): ?>
-        <script>
-            (function () {
-                var area = document.querySelector('[data-fiesta-nombres]');
-                if (!area) { return; }
-                area.addEventListener('keydown', function (ev) {
-                    if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) {
-                        ev.preventDefault();
-                        if (area.value.trim() !== '') { area.form.requestSubmit(); }
-                    }
-                });
-            })();
-        </script>
-    <?php endif; ?>
 <?php else: ?>
 
     <section class="section" aria-labelledby="t-equipos">

@@ -1,6 +1,7 @@
 <?php
 /** @var array<string,string> $errors */
 /** @var array<string,mixed> $old */
+/** @var list<array<string,mixed>> $disponibles */
 $errors = $errors ?? [];
 $old = $old ?? [];
 $cfg = $old + ['modalidad' => 'DOBLES', 'formato' => 'ELIMINACION', 'num_grupos' => 2, 'clasificados_por_grupo' => 2];
@@ -16,7 +17,7 @@ $cfg = $old + ['modalidad' => 'DOBLES', 'formato' => 'ELIMINACION', 'num_grupos'
     <div>
         <span class="eyebrow">Torneo fiesta</span>
         <h1>Nueva fiesta</h1>
-        <p>Elegí cómo se juega y, si querés, pegá ya la lista de participantes. Todo se puede ajustar hasta girar la ruleta.</p>
+        <p>Elegí cómo se juega y, si querés, ya marcá a los jugadores que participan. Todo se puede ajustar hasta girar la ruleta.</p>
     </div>
 </header>
 
@@ -46,13 +47,12 @@ $cfg = $old + ['modalidad' => 'DOBLES', 'formato' => 'ELIMINACION', 'num_grupos'
     </fieldset>
 
     <fieldset class="fieldset">
-        <legend>Participantes</legend>
-        <div class="field">
-            <label for="f-participantes">Nombres (opcional)</label>
-            <textarea id="f-participantes" name="participantes" rows="6" aria-describedby="h-participantes"
-                      placeholder="Ana&#10;Bruno&#10;Carla&#10;Diego"><?= e((string) ($old['participantes'] ?? '')) ?></textarea>
-            <p class="field__hint" id="h-participantes">Uno por línea o separados por coma. Los repetidos se ignoran.</p>
-        </div>
+        <legend>Participantes <span class="muted small">(opcional, también se pueden sumar después)</span></legend>
+        <?php if ($disponibles === []): ?>
+            <p class="muted small"><?= icon('info') ?> No hay jugadores activos. Cargalos en <a class="link" href="/personas">Jugadores</a>.</p>
+        <?php else: ?>
+            <?php $seleccionados = $old['persona_ids'] ?? []; $submitLabel = null; require __DIR__ . '/_selector-jugadores.php'; ?>
+        <?php endif; ?>
     </fieldset>
 
     <div class="form-actions">

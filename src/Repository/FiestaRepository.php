@@ -13,8 +13,10 @@ use PingPong\Domain\FixtureRoundRobin;
  */
 final class FiestaRepository
 {
-    private const EQUIPO_LABEL = "CASE WHEN %1\$s.participante_2_id IS NULL THEN %2\$s.nombre
-                                       ELSE CONCAT(%2\$s.nombre, ' & ', %3\$s.nombre) END";
+    private const EQUIPO_LABEL = "CASE WHEN %1\$s.participante_2_id IS NULL
+                                       THEN CONCAT(TRIM(%2\$s.nombre), ' ', TRIM(%2\$s.apellido))
+                                       ELSE CONCAT(TRIM(%2\$s.nombre), ' ', TRIM(%2\$s.apellido), ' & ',
+                                                   TRIM(%3\$s.nombre), ' ', TRIM(%3\$s.apellido)) END";
 
     public function __construct(private PDO $db)
     {
@@ -102,44 +104,89 @@ final class FiestaRepository
     //  Participants
     // ------------------------------------------------------------------
 
-    /** @return list<array{id:int,nombre:string}> */
+    /**
+     * Registered players (platform `persona`), with a display name for the
+     * roulette ("Nombre Apellido").
+     *
+     * @return list<array{id:int,persona_id:int,nombre:string,area:?string}>
+     */
     public function participantes(int $fiestaId): array
     {
-        $stmt = $this->db->prepare('SELECT id, nombre FROM fiesta_participante WHERE fiesta_id = :f ORDER BY id');
+        $stmt = $this->db->prepare(
+            "SELECT fp.id, fp.persona_id, CONCAT(TRIM(p.nombre), ' ', TRIM(p.apellido)) AS nombre, ar.nombre AS area
+             FROM fiesta_participante fp
+             JOIN persona p    ON p.id = fp.persona_id
+             LEFT JOIN area ar ON ar.id = p.area_id
+             WHERE fp.fiesta_id = :f
+             ORDER BY p.nombre, p.apellido"
+        );
         $stmt->execute([':f' => $fiestaId]);
         return array_map(
-            static fn (array $r): array => ['id' => (int) $r['id'], 'nombre' => (string) $r['nombre']],
+            static fn (array $r): array => [
+                'id'         => (int) $r['id'],
+                'persona_id' => (int) $r['persona_id'],
+                'nombre'     => (string) $r['nombre'],
+                'area'       => $r['area'] !== null ? (string) $r['area'] : null,
+            ],
             $stmt->fetchAll()
         );
     }
 
     /**
-     * Adds names, skipping the ones already registered (case-insensitive).
+     * Active players not yet registered in this fiesta.
      *
-     * @param list<string> $nombres
-     * @return array{agregados:int,repetidos:list<string>}
+     * @return list<array<string,mixed>>
      */
-    public function agregarParticipantes(int $fiestaId, array $nombres): array
+    public function disponibles(int $fiestaId): array
     {
-        $existentes = [];
-        foreach ($this->participantes($fiestaId) as $p) {
-            $existentes[mb_strtolower($p['nombre'])] = true;
+        $stmt = $this->db->prepare(
+            'SELECT p.id, p.nombre, p.apellido, ar.nombre AS area
+             FROM persona p
+             LEFT JOIN area ar ON ar.id = p.area_id
+             WHERE p.activo = 1
+               AND p.id NOT IN (SELECT persona_id FROM fiesta_participante WHERE fiesta_id = :f)
+             ORDER BY p.apellido, p.nombre'
+        );
+        $stmt->execute([':f' => $fiestaId]);
+        return $stmt->fetchAll();
+    }
+
+    /** @return list<array<string,mixed>> every active player (create form) */
+    public function jugadoresActivos(): array
+    {
+        return $this->db->query(
+            'SELECT p.id, p.nombre, p.apellido, ar.nombre AS area
+             FROM persona p
+             LEFT JOIN area ar ON ar.id = p.area_id
+             WHERE p.activo = 1
+             ORDER BY p.apellido, p.nombre'
+        )->fetchAll();
+    }
+
+    /**
+     * Registers platform players. Only active players count; ids already in the
+     * fiesta, inactive or unknown are skipped.
+     *
+     * @param list<int> $personaIds
+     * @return int players added
+     */
+    public function agregarParticipantes(int $fiestaId, array $personaIds): int
+    {
+        $validos = [];
+        foreach ($this->disponibles($fiestaId) as $d) {
+            $validos[(int) $d['id']] = true;
         }
 
-        $insert = $this->db->prepare('INSERT INTO fiesta_participante (fiesta_id, nombre) VALUES (:f, :n)');
+        $insert = $this->db->prepare('INSERT INTO fiesta_participante (fiesta_id, persona_id) VALUES (:f, :p)');
         $agregados = 0;
-        $repetidos = [];
-        foreach ($nombres as $nombre) {
-            $clave = mb_strtolower($nombre);
-            if (isset($existentes[$clave])) {
-                $repetidos[] = $nombre;
+        foreach (array_unique($personaIds) as $personaId) {
+            if (!isset($validos[$personaId])) {
                 continue;
             }
-            $insert->execute([':f' => $fiestaId, ':n' => $nombre]);
-            $existentes[$clave] = true;
+            $insert->execute([':f' => $fiestaId, ':p' => $personaId]);
             $agregados++;
         }
-        return ['agregados' => $agregados, 'repetidos' => $repetidos];
+        return $agregados;
     }
 
     public function quitarParticipante(int $fiestaId, int $participanteId): void
@@ -253,10 +300,12 @@ final class FiestaRepository
         $label = sprintf(self::EQUIPO_LABEL, 'e', 'p1', 'p2');
         $stmt = $this->db->prepare(
             "SELECT e.id, e.numero, e.grupo, e.participante_1_id, e.participante_2_id,
-                    p1.nombre AS nombre_1, p2.nombre AS nombre_2, {$label} AS label
+                    {$label} AS label
              FROM fiesta_equipo e
-             JOIN fiesta_participante p1 ON p1.id = e.participante_1_id
-             LEFT JOIN fiesta_participante p2 ON p2.id = e.participante_2_id
+             JOIN fiesta_participante fp1 ON fp1.id = e.participante_1_id
+             JOIN persona p1              ON p1.id = fp1.persona_id
+             LEFT JOIN fiesta_participante fp2 ON fp2.id = e.participante_2_id
+             LEFT JOIN persona p2              ON p2.id = fp2.persona_id
              WHERE e.fiesta_id = :f
              ORDER BY e.numero"
         );
