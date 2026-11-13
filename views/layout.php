@@ -11,6 +11,7 @@ $navGroups = [
     'Competencia' => [
         ['href' => '/', 'label' => 'Inicio', 'icon' => 'home'],
         ['href' => '/torneos', 'label' => 'Torneos', 'icon' => 'trophy'],
+        ['href' => '/fiesta', 'label' => 'Torneo fiesta', 'icon' => 'shuffle'],
         ['href' => '/ranking', 'label' => 'Ranking', 'icon' => 'ranking'],
         ['href' => '/personas', 'label' => 'Jugadores', 'icon' => 'users'],
     ],
@@ -110,6 +111,7 @@ $navGroups['Ayuda'] = [
     <nav class="tabbar" aria-label="Accesos rápidos">
         <a class="tabbar__link" href="/"<?= nav_current('/') ?>><?= icon('home') ?><span>Inicio</span></a>
         <a class="tabbar__link" href="/torneos"<?= nav_current('/torneos') ?>><?= icon('trophy') ?><span>Torneos</span></a>
+        <a class="tabbar__link" href="/fiesta"<?= nav_current('/fiesta') ?>><?= icon('shuffle') ?><span>Fiesta</span></a>
         <a class="tabbar__link" href="/ranking"<?= nav_current('/ranking') ?>><?= icon('ranking') ?><span>Ranking</span></a>
         <a class="tabbar__link" href="/personas"<?= nav_current('/personas') ?>><?= icon('users') ?><span>Jugadores</span></a>
     </nav>

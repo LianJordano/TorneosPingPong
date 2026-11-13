@@ -15,6 +15,7 @@ $styles = [
     'assets/css/pages/jugadores.css',
     'assets/css/pages/admin.css',
     'assets/css/pages/publico.css',
+    'assets/css/pages/fiesta.css',
     'assets/css/core/utilities.css',
 ];
 ?>

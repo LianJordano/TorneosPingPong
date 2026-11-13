@@ -113,6 +113,21 @@
     --topbar-h: 60px;
     --tabbar-h: 64px;
     --content-max: 1240px;
+
+    /* Party roulette stage — intentionally dark in both themes (show mode). */
+    --stage-bg: #0a0f1f;
+    --stage-bg-2: #1b1440;
+    --stage-surface: rgba(255, 255, 255, 0.06);
+    --stage-surface-2: rgba(255, 255, 255, 0.12);
+    --stage-border: rgba(255, 255, 255, 0.14);
+    --stage-text: #f8fafc;
+    --stage-muted: #a5b0c8;
+    --stage-glow: rgba(249, 115, 22, 0.55);
+    --stage-primary-glow: rgba(79, 139, 255, 0.45);
+    --confetti-1: #f97316;
+    --confetti-2: #4f8bff;
+    --confetti-3: #facc15;
+    --confetti-4: #22c55e;
 }
 
 /* Dark theme: tokens only. Components must use tokens, never raw colors. */

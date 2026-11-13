@@ -11,6 +11,7 @@ use PingPong\Controller\CuentaController;
 use PingPong\Controller\DashboardController;
 use PingPong\Controller\EliminatoriaController;
 use PingPong\Controller\ErrorController;
+use PingPong\Controller\FiestaController;
 use PingPong\Controller\InscripcionController;
 use PingPong\Controller\LigaController;
 use PingPong\Controller\PersonaController;
@@ -24,6 +25,7 @@ use PingPong\Http\Router;
 use PingPong\Repository\AreaRepository;
 use PingPong\Repository\AuditoriaRepository;
 use PingPong\Repository\EstadisticaJugadorRepository;
+use PingPong\Repository\FiestaRepository;
 use PingPong\Repository\InscripcionRepository;
 use PingPong\Repository\NivelRepository;
 use PingPong\Repository\PartidoRepository;
@@ -86,6 +88,7 @@ $auditCtl    = new AuditoriaController($view, $torneos, $auditoria);
 $ayudaCtl    = new AyudaController($view);
 $rankingCtl  = new RankingController($view, $rankingHistorico);
 $usuariosCtl = new UsuarioController($view, $usuarios);
+$fiestaCtl   = new FiestaController($view, new FiestaRepository($pdo), $auditoria);
 
 // --- Rutas ---
 $router = new Router();
@@ -183,6 +186,21 @@ $router->get('/torneos/{id}/partidos.csv', static fn (array $p): string => $liga
 
 // Auditoría
 $router->get('/torneos/{id}/auditoria', static fn (array $p): string => $auditCtl->ver($p));
+
+// Torneo fiesta (sistema paralelo: sorteo con ruleta). /fiesta/nueva va antes de /fiesta/{id}.
+$router->get('/fiesta',                                         static fn (): string => $fiestaCtl->index());
+$router->get('/fiesta/nueva',                                   static fn (): string => $fiestaCtl->create());
+$router->post('/fiesta',                                        static fn (): string => $fiestaCtl->store());
+$router->get('/fiesta/{id}',                                    static fn (array $p): string => $fiestaCtl->show($p));
+$router->get('/fiesta/{id}/ruleta',                             static fn (array $p): string => $fiestaCtl->ruleta($p));
+$router->post('/fiesta/{id}/config',                            static fn (array $p): string => $fiestaCtl->actualizarConfig($p));
+$router->post('/fiesta/{id}/participantes',                     static fn (array $p): string => $fiestaCtl->agregarParticipantes($p));
+$router->post('/fiesta/{id}/participantes/{participante}/eliminar', static fn (array $p): string => $fiestaCtl->quitarParticipante($p));
+$router->post('/fiesta/{id}/sortear',                           static fn (array $p): string => $fiestaCtl->sortear($p));
+$router->post('/fiesta/{id}/deshacer-sorteo',                   static fn (array $p): string => $fiestaCtl->deshacerSorteo($p));
+$router->post('/fiesta/{id}/partidos/{partido}',                static fn (array $p): string => $fiestaCtl->guardarResultado($p));
+$router->post('/fiesta/{id}/eliminatoria',                      static fn (array $p): string => $fiestaCtl->pasarAEliminatoria($p));
+$router->post('/fiesta/{id}/eliminar',                          static fn (array $p): string => $fiestaCtl->delete($p));
 
 // Vista pública (sin autenticación)
 $router->get('/publico/torneos/{id}', static fn (array $p): string => $publicoCtl->ver($p));
