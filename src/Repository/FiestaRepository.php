@@ -22,6 +22,29 @@ final class FiestaRepository
     {
     }
 
+    /**
+     * Runs a callback inside a DB transaction (reusing an active one if present).
+     *
+     * @template T
+     * @param callable():T $fn
+     * @return T
+     */
+    public function transaccion(callable $fn): mixed
+    {
+        if ($this->db->inTransaction()) {
+            return $fn();
+        }
+        $this->db->beginTransaction();
+        try {
+            $result = $fn();
+            $this->db->commit();
+            return $result;
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
     /** @return list<array<string,mixed>> */
     public function all(): array
     {
@@ -81,17 +104,12 @@ final class FiestaRepository
 
     public function delete(int $id): void
     {
-        $this->db->beginTransaction();
-        try {
+        $this->transaccion(function () use ($id): void {
             // Self-referencing and team FKs: clear matches and teams before the fiesta.
             $this->db->prepare('DELETE FROM fiesta_partido WHERE fiesta_id = :id')->execute([':id' => $id]);
             $this->db->prepare('DELETE FROM fiesta_equipo WHERE fiesta_id = :id')->execute([':id' => $id]);
             $this->db->prepare('DELETE FROM fiesta WHERE id = :id')->execute([':id' => $id]);
-            $this->db->commit();
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
+        });
     }
 
     public function cambiarEstado(int $id, string $estado): void
@@ -164,29 +182,36 @@ final class FiestaRepository
     }
 
     /**
-     * Registers platform players. Only active players count; ids already in the
-     * fiesta, inactive or unknown are skipped.
+     * Registers platform players transactionally and idempotently.
+     * Only active players count; ids already in the fiesta, inactive or unknown are skipped.
      *
      * @param list<int> $personaIds
      * @return int players added
      */
     public function agregarParticipantes(int $fiestaId, array $personaIds): int
     {
-        $validos = [];
-        foreach ($this->disponibles($fiestaId) as $d) {
-            $validos[(int) $d['id']] = true;
-        }
-
-        $insert = $this->db->prepare('INSERT INTO fiesta_participante (fiesta_id, persona_id) VALUES (:f, :p)');
-        $agregados = 0;
-        foreach (array_unique($personaIds) as $personaId) {
-            if (!isset($validos[$personaId])) {
-                continue;
+        return $this->transaccion(function () use ($fiestaId, $personaIds): int {
+            $estado = $this->bloquearEstado($fiestaId);
+            if ($estado !== 'INSCRIPCION') {
+                throw new \DomainException('Solo se pueden sumar jugadores durante la inscripción.');
             }
-            $insert->execute([':f' => $fiestaId, ':p' => $personaId]);
-            $agregados++;
-        }
-        return $agregados;
+
+            $validos = [];
+            foreach ($this->disponibles($fiestaId) as $d) {
+                $validos[(int) $d['id']] = true;
+            }
+
+            $insert = $this->db->prepare('INSERT IGNORE INTO fiesta_participante (fiesta_id, persona_id) VALUES (:f, :p)');
+            $agregados = 0;
+            foreach (array_unique($personaIds) as $personaId) {
+                if (!isset($validos[$personaId])) {
+                    continue;
+                }
+                $insert->execute([':f' => $fiestaId, ':p' => $personaId]);
+                $agregados += $insert->rowCount();
+            }
+            return $agregados;
+        });
     }
 
     public function quitarParticipante(int $fiestaId, int $participanteId): void
@@ -201,15 +226,20 @@ final class FiestaRepository
 
     /**
      * Persists the draw atomically: teams, groups or bracket, matches, the
-     * roulette script and the new state.
+     * roulette script and the new state. Locks the fiesta row to prevent
+     * double-submit race conditions.
      *
      * @param array{equipos:list<array{numero:int,p1:int,p2:?int}>,orden:list<int>,grupos:array<int,int>,bracket:array{tamano:int,rondas:int,partidos:list<array<string,mixed>>}} $sorteo
      * @param array<string,mixed> $guion roulette payload (stored as JSON)
      */
     public function guardarSorteo(int $fiestaId, string $formato, array $sorteo, array $guion): void
     {
-        $this->db->beginTransaction();
-        try {
+        $this->transaccion(function () use ($fiestaId, $formato, $sorteo, $guion): void {
+            $estadoActual = $this->bloquearEstado($fiestaId);
+            if ($estadoActual !== 'INSCRIPCION') {
+                throw new \DomainException('La fiesta ya fue sorteada o no está en etapa de inscripción.');
+            }
+
             $insEquipo = $this->db->prepare(
                 'INSERT INTO fiesta_equipo (fiesta_id, numero, participante_1_id, participante_2_id, grupo)
                  VALUES (:f, :numero, :p1, :p2, :grupo)'
@@ -236,11 +266,13 @@ final class FiestaRepository
                     "INSERT INTO fiesta_partido (fiesta_id, fase, grupo, ronda, orden, equipo_a_id, equipo_b_id)
                      VALUES (:f, 'GRUPOS', :g, :ronda, :orden, :a, :b)"
                 );
+                // Monotonic orden across groups satisfies uq_fiesta_partido_slot (fiesta_id, fase, ronda, orden).
+                $orden = 0;
                 foreach ($porGrupo as $grupo => $ids) {
-                    foreach (FixtureRoundRobin::generar($ids) as $i => $m) {
+                    foreach (FixtureRoundRobin::generar($ids) as $m) {
                         $insPartido->execute([
                             ':f' => $fiestaId, ':g' => $grupo, ':ronda' => $m['ronda'],
-                            ':orden' => $i, ':a' => $m['a'], ':b' => $m['b'],
+                            ':orden' => $orden++, ':a' => $m['a'], ':b' => $m['b'],
                         ]);
                     }
                 }
@@ -265,29 +297,31 @@ final class FiestaRepository
                 ':json'   => json_encode($guion, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
                 ':id'     => $fiestaId,
             ]);
-
-            $this->db->commit();
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
+        });
     }
 
     /** Removes the draw (teams and matches) and goes back to registration. */
     public function deshacerSorteo(int $fiestaId): void
     {
-        $this->db->beginTransaction();
-        try {
+        $this->transaccion(function () use ($fiestaId): void {
+            $estado = $this->bloquearEstado($fiestaId);
+            if ($estado === null || $estado === 'INSCRIPCION') {
+                return;
+            }
+            $check = $this->db->prepare(
+                "SELECT 1 FROM fiesta_partido WHERE fiesta_id = :f AND es_bye = 0 AND estado = 'FINALIZADO' LIMIT 1"
+            );
+            $check->execute([':f' => $fiestaId]);
+            if ($check->fetchColumn() !== false) {
+                throw new \DomainException('Ya hay resultados cargados: no se puede repetir el sorteo.');
+            }
+
             $this->db->prepare('DELETE FROM fiesta_partido WHERE fiesta_id = :f')->execute([':f' => $fiestaId]);
             $this->db->prepare('DELETE FROM fiesta_equipo WHERE fiesta_id = :f')->execute([':f' => $fiestaId]);
             $this->db->prepare(
                 "UPDATE fiesta SET estado = 'INSCRIPCION', sorteo_json = NULL, sorteado_at = NULL WHERE id = :f"
             )->execute([':f' => $fiestaId]);
-            $this->db->commit();
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
+        });
     }
 
     // ------------------------------------------------------------------
@@ -332,41 +366,98 @@ final class FiestaRepository
         return $row === false ? null : $row;
     }
 
-    /** Saves a score and, in the knockout, moves the winner to the next match. */
-    public function guardarResultado(array $partido, int $marcadorA, int $marcadorB, int $ganadorId): void
-    {
-        $this->db->beginTransaction();
-        try {
+    /**
+     * Saves a score atomically under FOR UPDATE locks: validates fiesta state,
+     * match readiness, next-match lock, advances winner in knockout, and closes
+     * the fiesta when saving the final (or allows ADMIN to correct the final).
+     *
+     * @return array{partido:array<string,mixed>,es_final:bool,ganador_id:int}
+     * @throws \DomainException
+     */
+    public function guardarResultado(
+        int $fiestaId,
+        int $partidoId,
+        int $marcadorA,
+        int $marcadorB,
+        bool $puedeCorregirFinal = false,
+    ): array {
+        return $this->transaccion(function () use ($fiestaId, $partidoId, $marcadorA, $marcadorB, $puedeCorregirFinal): array {
+            $estadoFiesta = $this->bloquearEstado($fiestaId);
+            if ($estadoFiesta === null) {
+                throw new \DomainException('La fiesta no existe.');
+            }
+
+            $stmt = $this->db->prepare('SELECT * FROM fiesta_partido WHERE id = :id AND fiesta_id = :f FOR UPDATE');
+            $stmt->execute([':id' => $partidoId, ':f' => $fiestaId]);
+            $partido = $stmt->fetch();
+            if ($partido === false || (int) $partido['es_bye'] === 1 || $partido['equipo_a_id'] === null || $partido['equipo_b_id'] === null) {
+                throw new \DomainException('Ese partido todavía no tiene rivales definidos.');
+            }
+
+            $esFinal = $partido['fase'] === 'ELIMINATORIA' && $partido['siguiente_id'] === null;
+            $corrigiendoFinal = $esFinal && $estadoFiesta === 'FINALIZADO' && $puedeCorregirFinal;
+            if ($partido['fase'] !== $estadoFiesta && !$corrigiendoFinal) {
+                throw new \DomainException('Esa fase ya está cerrada.');
+            }
+
+            $ganadorId = $marcadorA > $marcadorB
+                ? (int) $partido['equipo_a_id']
+                : (int) $partido['equipo_b_id'];
+
+            if ($partido['fase'] === 'ELIMINATORIA' && $partido['siguiente_id'] !== null) {
+                $stmtSig = $this->db->prepare('SELECT estado FROM fiesta_partido WHERE id = :id AND fiesta_id = :f FOR UPDATE');
+                $stmtSig->execute([':id' => (int) $partido['siguiente_id'], ':f' => $fiestaId]);
+                $estadoSig = $stmtSig->fetchColumn();
+                if ($estadoSig === 'FINALIZADO' && $partido['ganador_id'] !== null && (int) $partido['ganador_id'] !== $ganadorId) {
+                    throw new \DomainException('No se puede cambiar el ganador: el partido siguiente ya se jugó.');
+                }
+            }
+
             $this->db->prepare(
                 "UPDATE fiesta_partido
                  SET marcador_a = :ma, marcador_b = :mb, ganador_id = :g, estado = 'FINALIZADO'
                  WHERE id = :id"
-            )->execute([':ma' => $marcadorA, ':mb' => $marcadorB, ':g' => $ganadorId, ':id' => $partido['id']]);
+            )->execute([':ma' => $marcadorA, ':mb' => $marcadorB, ':g' => $ganadorId, ':id' => $partidoId]);
 
             if ($partido['fase'] === 'ELIMINATORIA' && $partido['siguiente_id'] !== null) {
                 $columna = (int) $partido['orden'] % 2 === 0 ? 'equipo_a_id' : 'equipo_b_id';
                 $this->db->prepare("UPDATE fiesta_partido SET {$columna} = :g WHERE id = :id")
-                    ->execute([':g' => $ganadorId, ':id' => $partido['siguiente_id']]);
+                    ->execute([':g' => $ganadorId, ':id' => (int) $partido['siguiente_id']]);
             }
-            $this->db->commit();
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
+
+            if ($esFinal) {
+                $this->db->prepare("UPDATE fiesta SET estado = 'FINALIZADO' WHERE id = :id")
+                    ->execute([':id' => $fiestaId]);
+            }
+
+            return [
+                'partido'    => $partido,
+                'es_final'   => $esFinal,
+                'ganador_id' => $ganadorId,
+            ];
+        });
     }
 
     /** @param array{tamano:int,rondas:int,partidos:list<array<string,mixed>>} $bracket team ids already mapped */
     public function crearEliminatoria(int $fiestaId, array $bracket): void
     {
-        $this->db->beginTransaction();
-        try {
+        $this->transaccion(function () use ($fiestaId, $bracket): void {
+            $estadoActual = $this->bloquearEstado($fiestaId);
+            if ($estadoActual !== 'GRUPOS') {
+                throw new \DomainException('La eliminatoria ya fue creada o la fiesta no está en fase de grupos.');
+            }
             $this->insertarBracket($fiestaId, $bracket);
             $this->db->prepare("UPDATE fiesta SET estado = 'ELIMINATORIA' WHERE id = :id")->execute([':id' => $fiestaId]);
-            $this->db->commit();
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
+        });
+    }
+
+    /** Locks the fiesta row inside an active transaction and returns its estado. */
+    private function bloquearEstado(int $fiestaId): ?string
+    {
+        $stmt = $this->db->prepare('SELECT estado FROM fiesta WHERE id = :id FOR UPDATE');
+        $stmt->execute([':id' => $fiestaId]);
+        $estado = $stmt->fetchColumn();
+        return $estado === false ? null : (string) $estado;
     }
 
     /**

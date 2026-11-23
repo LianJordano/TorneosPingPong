@@ -5,6 +5,7 @@
 /** @var array<int,array<string,mixed>> $equipos */
 /** @var array<int,array<string,mixed>> $grupos */
 /** @var array<int,list<array<string,mixed>>> $rondas */
+/** @var array<int,true> $partidosBloqueados */
 /** @var array<string,mixed>|null $campeon */
 /** @var string|null $errorSorteo */
 /** @var bool $gruposListos */
@@ -107,7 +108,13 @@ $resumenEquipos = $dobles
                 <?php else: ?>
                     <form method="post" action="<?= e($base) ?>/participantes" class="form-panel">
                         <?= csrf_field() ?>
-                        <?php $seleccionados = []; $submitLabel = 'Sumar a la fiesta'; require __DIR__ . '/_selector-jugadores.php'; ?>
+                        <?php
+                        $seleccionados = [];
+                        $submitLabel = 'Sumar a la fiesta';
+                        $paridadBase = $n;
+                        $modalidadFija = (string) $fiesta['modalidad'];
+                        require __DIR__ . '/_selector-jugadores.php';
+                        ?>
                     </form>
                 <?php endif; ?>
             <?php endif; ?>
@@ -205,49 +212,152 @@ $resumenEquipos = $dobles
     </section>
 
     <?php if ($grupos !== []): ?>
+        <?php
+        $totalPartidosGrupos = 0;
+        $jugadosGrupos = 0;
+        foreach ($grupos as $gStats) {
+            foreach ($gStats['partidos'] as $pStats) {
+                $totalPartidosGrupos++;
+                if ($pStats['estado'] === 'FINALIZADO') {
+                    $jugadosGrupos++;
+                }
+            }
+        }
+        ?>
         <section class="section" aria-labelledby="t-grupos">
             <div class="section-head">
-                <h2 id="t-grupos">Fase de grupos</h2>
+                <div>
+                    <h2 id="t-grupos">Fase de grupos</h2>
+                    <p class="muted small fiesta-bracket-sub">
+                        Todos contra todos por grupo. Clasifican los <strong><?= e((string) $clasifican) ?> mejores</strong> de cada grupo a la eliminatoria
+                        · <strong><?= e("{$jugadosGrupos}/{$totalPartidosGrupos}") ?></strong> partidos jugados.
+                    </p>
+                </div>
                 <?php if ($estado === 'GRUPOS' && $puedeGestionar): ?>
                     <form method="post" action="<?= e($base) ?>/eliminatoria"
                           data-confirm="Clasifican los <?= e((string) $clasifican) ?> mejores de cada grupo y se arman los cruces." data-confirm-title="Pasar a la eliminatoria" data-confirm-ok="Armar cruces" data-confirm-tone="info">
                         <?= csrf_field() ?>
-                        <button type="submit" class="btn btn--primary"<?= $gruposListos ? '' : ' disabled title="Faltan partidos de grupo"' ?>>
+                        <button type="submit" class="btn btn--primary"<?= $gruposListos ? '' : ' disabled title="Completá todos los partidos de grupo primero"' ?>>
                             <?= icon('bracket') ?> Pasar a la eliminatoria
                         </button>
                     </form>
                 <?php endif; ?>
             </div>
+
             <div class="fiesta-groups">
                 <?php foreach ($grupos as $g): ?>
-                    <article class="card fiesta-group">
+                    <?php
+                    $pendientesGrupo = [];
+                    $jugadosGrupo = [];
+                    foreach ($g['partidos'] as $pg) {
+                        if ($pg['estado'] === 'FINALIZADO') {
+                            $jugadosGrupo[] = $pg;
+                        } else {
+                            $pendientesGrupo[] = $pg;
+                        }
+                    }
+                    $totalG = count($g['partidos']);
+                    $doneG = count($jugadosGrupo);
+                    $pctG = $totalG > 0 ? (int) round(($doneG / $totalG) * 100) : 0;
+                    $grupoCompleto = $totalG > 0 && $doneG === $totalG;
+                    ?>
+                    <article class="card fiesta-group<?= $grupoCompleto ? ' is-complete' : '' ?>">
                         <header class="fiesta-group__head">
-                            <span class="fiesta-group__letter"><?= e($g['letra']) ?></span>
-                            <h3>Grupo <?= e($g['letra']) ?></h3>
+                            <div class="fiesta-group__id">
+                                <span class="fiesta-group__letter"><?= e($g['letra']) ?></span>
+                                <div>
+                                    <h3>Grupo <?= e($g['letra']) ?></h3>
+                                    <p class="fiesta-group__sub">
+                                        <?= e((string) count($g['tabla'])) ?> <?= $dobles ? 'parejas' : 'jugadores' ?> · Clasifican top <?= e((string) $clasifican) ?>
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="fiesta-group__pill<?= $grupoCompleto ? ' is-done' : '' ?>">
+                                <?= $grupoCompleto ? icon('check') . ' Completo' : e("{$doneG}/{$totalG} jugados") ?>
+                            </span>
                         </header>
-                        <div class="table-wrap">
-                            <table class="table fiesta-table">
-                                <caption class="sr-only">Posiciones del grupo <?= e($g['letra']) ?></caption>
-                                <thead>
-                                    <tr><th scope="col">#</th><th scope="col"><?= $dobles ? 'Pareja' : 'Jugador' ?></th><th scope="col" class="num">PJ</th><th scope="col" class="num">PG</th><th scope="col" class="num">Dif</th></tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($g['tabla'] as $fila): ?>
-                                        <tr class="<?= $fila['posicion'] <= $clasifican ? 'is-qualified' : '' ?>">
-                                            <td><?= e((string) $fila['posicion']) ?></td>
-                                            <td class="cell--primary"><?= e((string) ($equipos[$fila['equipo']]['label'] ?? '')) ?></td>
-                                            <td class="num"><?= e((string) $fila['pj']) ?></td>
-                                            <td class="num"><strong><?= e((string) $fila['pg']) ?></strong></td>
-                                            <td class="num"><?= e(($fila['diferencia'] > 0 ? '+' : '') . $fila['diferencia']) ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+
+                        <div class="fiesta-group__progress" aria-hidden="true">
+                            <span style="width: <?= e((string) $pctG) ?>%"></span>
                         </div>
-                        <div class="fiesta-group__matches">
-                            <?php foreach ($g['partidos'] as $p): ?>
-                                <?php require __DIR__ . '/_partido.php'; ?>
-                            <?php endforeach; ?>
+
+                        <div class="fiesta-group__standings">
+                            <div class="table-wrap">
+                                <table class="table fiesta-table">
+                                    <caption class="sr-only">Posiciones del grupo <?= e($g['letra']) ?></caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" class="fiesta-table__pos">#</th>
+                                            <th scope="col"><?= $dobles ? 'Pareja' : 'Jugador' ?></th>
+                                            <th scope="col" class="num" title="Partidos jugados">PJ</th>
+                                            <th scope="col" class="num" title="Partidos ganados">PG</th>
+                                            <th scope="col" class="num" title="Partidos perdidos">PP</th>
+                                            <th scope="col" class="num" title="Diferencia de puntos">Dif</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php $totalFilas = count($g['tabla']); ?>
+                                        <?php foreach ($g['tabla'] as $fila): ?>
+                                            <?php
+                                            $eqFila = $equipos[$fila['equipo']] ?? null;
+                                            $clasifica = $fila['posicion'] <= $clasifican;
+                                            $esCorte = $fila['posicion'] === $clasifican && $clasifican < $totalFilas;
+                                            $dif = (int) $fila['diferencia'];
+                                            $difClass = $dif > 0 ? 'fiesta-diff--pos' : ($dif < 0 ? 'fiesta-diff--neg' : 'fiesta-diff--zero');
+                                            ?>
+                                            <tr class="<?= $clasifica ? 'is-qualified' : '' ?><?= $esCorte ? ' is-cutoff' : '' ?>">
+                                                <td class="fiesta-table__pos">
+                                                    <span class="fiesta-pos-badge<?= $clasifica ? ' is-qualified' : '' ?>"><?= e((string) $fila['posicion']) ?></span>
+                                                </td>
+                                                <td class="cell--primary fiesta-table__team">
+                                                    <?php if ($eqFila !== null): ?>
+                                                        <span class="fiesta-table__seed">#<?= e((string) $eqFila['numero']) ?></span>
+                                                        <span class="fiesta-table__name"><?= e((string) $eqFila['label']) ?></span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="num"><?= e((string) $fila['pj']) ?></td>
+                                                <td class="num"><strong><?= e((string) $fila['pg']) ?></strong></td>
+                                                <td class="num muted"><?= e((string) $fila['pp']) ?></td>
+                                                <td class="num"><span class="fiesta-diff <?= $difClass ?>"><?= e(($dif > 0 ? '+' : '') . $dif) ?></span></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="fiesta-table__legend">
+                                <span class="fiesta-legend__dot fiesta-legend__dot--win" aria-hidden="true"></span>
+                                Zona de clasificación (Top <?= e((string) $clasifican) ?>)
+                            </p>
+                        </div>
+
+                        <div class="fiesta-group__fixtures">
+                            <?php $enBracket = false; $abrirPorDefecto = false; ?>
+
+                            <?php if ($pendientesGrupo !== []): ?>
+                                <div class="fiesta-group__block">
+                                    <h4 class="fiesta-group__block-title">
+                                        Por jugar <span class="fiesta-group__count"><?= e((string) count($pendientesGrupo)) ?></span>
+                                    </h4>
+                                    <div class="fiesta-group__matches">
+                                        <?php foreach ($pendientesGrupo as $p): ?>
+                                            <?php require __DIR__ . '/_partido.php'; ?>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if ($jugadosGrupo !== []): ?>
+                                <div class="fiesta-group__block">
+                                    <h4 class="fiesta-group__block-title fiesta-group__block-title--done">
+                                        Resultados <span class="fiesta-group__count"><?= e((string) count($jugadosGrupo)) ?></span>
+                                    </h4>
+                                    <div class="fiesta-group__matches">
+                                        <?php foreach ($jugadosGrupo as $p): ?>
+                                            <?php require __DIR__ . '/_partido.php'; ?>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -256,22 +366,87 @@ $resumenEquipos = $dobles
     <?php endif; ?>
 
     <?php if ($rondas !== []): ?>
-        <?php $totalRondas = max(array_keys($rondas)); ?>
+        <?php
+        $totalRondas = max(array_keys($rondas));
+        $enBracket = true;
+        ?>
         <section class="section" id="eliminatoria" aria-labelledby="t-eliminatoria">
             <div class="section-head">
-                <h2 id="t-eliminatoria">Eliminatoria</h2>
+                <div>
+                    <h2 id="t-eliminatoria">Cuadro eliminatorio</h2>
+                    <p class="muted small fiesta-bracket-sub">Seguí el camino directo hacia la final. Los cruces con pase directo avanzan automáticamente a la siguiente ronda.</p>
+                </div>
+                <div class="fiesta-bracket-legend" aria-label="Leyenda del cuadro">
+                    <span class="fiesta-legend__item"><span class="fiesta-legend__dot fiesta-legend__dot--win"></span> Avanza</span>
+                    <span class="fiesta-legend__item"><span class="fiesta-legend__dot fiesta-legend__dot--bye"></span> Pase directo</span>
+                    <span class="fiesta-legend__item"><span class="fiesta-legend__dot fiesta-legend__dot--final"></span> Final</span>
+                </div>
             </div>
-            <div class="fiesta-bracket" style="--rondas: <?= e((string) $totalRondas) ?>">
-                <?php foreach ($rondas as $numRonda => $partidosRonda): ?>
-                    <div class="fiesta-bracket__round">
-                        <h3 class="fiesta-bracket__title"><?= e(BracketEliminacion::nombreRonda($numRonda, $totalRondas)) ?></h3>
+            <div class="fiesta-bracket-wrap">
+                <div class="fiesta-bracket" style="--rondas: <?= e((string) $totalRondas) ?>">
+                    <?php foreach ($rondas as $numRonda => $partidosRonda): ?>
+                        <?php
+                        $esRondaFinal = $numRonda === $totalRondas;
+                        $nombreRonda = BracketEliminacion::nombreRonda($numRonda, $totalRondas);
+                        $jugables = 0;
+                        $resueltos = 0;
+                        foreach ($partidosRonda as $pr) {
+                            if ((int) $pr['es_bye'] === 0) {
+                                $jugables++;
+                                if ($pr['estado'] === 'FINALIZADO') {
+                                    $resueltos++;
+                                }
+                            }
+                        }
+                        ?>
+                        <div class="fiesta-bracket__round<?= $esRondaFinal ? ' fiesta-bracket__round--final' : '' ?>">
+                            <header class="fiesta-bracket__head">
+                                <h3 class="fiesta-bracket__title">
+                                    <?php if ($esRondaFinal): ?><?= icon('trophy') ?> <?php endif; ?>
+                                    <?= e($nombreRonda) ?>
+                                </h3>
+                                <span class="fiesta-bracket__meta">
+                                    <?= $esRondaFinal
+                                        ? ($resueltos > 0 ? 'Definida' : 'Título en juego')
+                                        : e("{$resueltos}/{$jugables} jugados") ?>
+                                </span>
+                            </header>
+                            <div class="fiesta-bracket__matches">
+                                <?php foreach ($partidosRonda as $idx => $p): ?>
+                                    <?php
+                                    $pairPos = ($idx % 2 === 0) ? 'top' : 'bottom';
+                                    $slotResuelto = $p['ganador_id'] !== null;
+                                    $etiquetaCruce = $esRondaFinal
+                                        ? 'GRAN FINAL'
+                                        : 'Cruce ' . (string) ($idx + 1);
+                                    ?>
+                                    <div class="fiesta-bracket__slot<?= $slotResuelto ? ' is-resolved' : '' ?>"
+                                         data-pair-pos="<?= $esRondaFinal ? 'final' : $pairPos ?>">
+                                        <?php require __DIR__ . '/_partido.php'; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+
+                    <div class="fiesta-bracket__round fiesta-bracket__round--champion">
+                        <header class="fiesta-bracket__head">
+                            <h3 class="fiesta-bracket__title"><?= icon('crown') ?> Campeón</h3>
+                            <span class="fiesta-bracket__meta"><?= $campeon !== null ? 'Coronado' : 'Pendiente' ?></span>
+                        </header>
                         <div class="fiesta-bracket__matches">
-                            <?php foreach ($partidosRonda as $p): ?>
-                                <?php require __DIR__ . '/_partido.php'; ?>
-                            <?php endforeach; ?>
+                            <div class="fiesta-bracket__slot<?= $campeon !== null ? ' is-resolved' : '' ?>" data-pair-pos="champion">
+                                <article class="fiesta-trophy-node<?= $campeon !== null ? ' is-crowned' : '' ?>">
+                                    <span class="fiesta-trophy-node__icon" aria-hidden="true"><?= icon('trophy') ?></span>
+                                    <span class="fiesta-trophy-node__eyebrow"><?= $campeon !== null ? 'Campeón de la fiesta' : 'Próximo campeón' ?></span>
+                                    <strong class="fiesta-trophy-node__name">
+                                        <?= $campeon !== null ? e((string) $campeon['label']) : 'Por definir' ?>
+                                    </strong>
+                                </article>
+                            </div>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                </div>
             </div>
         </section>
     <?php endif; ?>

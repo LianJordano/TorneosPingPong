@@ -44,6 +44,7 @@ final class SorteoFiesta
         string $formato,
         int $numGrupos = 1,
         ?callable $barajador = null,
+        ?int $clasificadosPorGrupo = null,
     ): array {
         $participantes = array_values($participantes);
         $barajador ??= static function (array $xs): array {
@@ -51,7 +52,7 @@ final class SorteoFiesta
             return $xs;
         };
 
-        self::validar(count($participantes), $dobles, $formato, $numGrupos);
+        self::validar(count($participantes), $dobles, $formato, $numGrupos, $clasificadosPorGrupo);
 
         $mezclados = array_values($barajador($participantes));
         $guion = [];
@@ -127,8 +128,13 @@ final class SorteoFiesta
      *
      * @throws \DomainException
      */
-    public static function validar(int $participantes, bool $dobles, string $formato, int $numGrupos): void
-    {
+    public static function validar(
+        int $participantes,
+        bool $dobles,
+        string $formato,
+        int $numGrupos,
+        ?int $clasificadosPorGrupo = null,
+    ): void {
         if (!in_array($formato, [self::ELIMINACION, self::GRUPOS], true)) {
             throw new \DomainException('Formato de torneo inválido.');
         }
@@ -147,6 +153,32 @@ final class SorteoFiesta
             if ($equipos < $numGrupos * 2) {
                 throw new \DomainException("Con {$equipos} equipos no alcanza para {$numGrupos} grupos: cada grupo necesita al menos 2.");
             }
+            if ($clasificadosPorGrupo !== null) {
+                self::validarClasificados($numGrupos, $clasificadosPorGrupo, $equipos);
+            }
+        }
+    }
+
+    /**
+     * Validates that the number of qualifiers per group is compatible with the
+     * smallest group size and yields at least 2 knockout teams.
+     *
+     * @throws \DomainException
+     */
+    public static function validarClasificados(int $numGrupos, int $clasificadosPorGrupo, int $cantidadEquipos): void
+    {
+        if ($numGrupos < 1) {
+            throw new \DomainException('Indicá al menos 1 grupo.');
+        }
+        if ($clasificadosPorGrupo < 1) {
+            throw new \DomainException('Debe clasificar al menos 1 equipo por grupo.');
+        }
+        $menorGrupo = intdiv($cantidadEquipos, $numGrupos);
+        if ($clasificadosPorGrupo > $menorGrupo) {
+            throw new \DomainException("Clasifican {$clasificadosPorGrupo} por grupo, pero el grupo más chico tendría {$menorGrupo} equipos. Bajá los clasificados o los grupos.");
+        }
+        if ($clasificadosPorGrupo * $numGrupos < 2) {
+            throw new \DomainException('Con 1 grupo tienen que clasificar al menos 2 equipos.');
         }
     }
 }

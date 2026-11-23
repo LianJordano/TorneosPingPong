@@ -12,7 +12,7 @@ $estados = [
     <div>
         <span class="eyebrow">Competencia</span>
         <h1>Torneo fiesta</h1>
-        <p>Anotá los nombres, girá la ruleta y dejá que el azar arme las parejas y los cruces uno por uno, en vivo y con suspenso.</p>
+        <p>Elegí a los jugadores registrados, girá la ruleta y dejá que el azar arme las parejas y los cruces uno por uno, en vivo y con suspenso.</p>
     </div>
     <?php if ($puedeGestionar): ?>
         <div class="actions">
@@ -22,7 +22,7 @@ $estados = [
 </header>
 
 <ol class="fiesta-how" aria-label="Cómo funciona">
-    <li><span class="fiesta-how__num">1</span><span><strong>Anotá</strong> a los participantes, solo con el nombre.</span></li>
+    <li><span class="fiesta-how__num">1</span><span><strong>Elegí</strong> a los jugadores registrados que van a participar.</span></li>
     <li><span class="fiesta-how__num">2</span><span><strong>Girá la ruleta:</strong> salen las parejas y los cruces de a uno.</span></li>
     <li><span class="fiesta-how__num">3</span><span><strong>Jugá</strong> los grupos o la eliminación directa hasta el campeón.</span></li>
 </ol>

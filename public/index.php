@@ -34,6 +34,7 @@ use PingPong\Repository\PremioRepository;
 use PingPong\Repository\TorneoRepository;
 use PingPong\Repository\UsuarioRepository;
 use PingPong\Service\CargaMasivaJugadoresService;
+use PingPong\Service\FiestaService;
 use PingPong\Service\JugadorUsuarioService;
 use PingPong\Service\RankingHistoricoService;
 use PingPong\Support\Session;
@@ -88,7 +89,8 @@ $auditCtl    = new AuditoriaController($view, $torneos, $auditoria);
 $ayudaCtl    = new AyudaController($view);
 $rankingCtl  = new RankingController($view, $rankingHistorico);
 $usuariosCtl = new UsuarioController($view, $usuarios);
-$fiestaCtl   = new FiestaController($view, new FiestaRepository($pdo), $auditoria);
+$fiestaSvc   = new FiestaService(new FiestaRepository($pdo), $auditoria);
+$fiestaCtl   = new FiestaController($view, $fiestaSvc);
 
 // --- Rutas ---
 $router = new Router();

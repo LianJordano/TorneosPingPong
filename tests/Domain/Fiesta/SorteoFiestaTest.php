@@ -105,4 +105,60 @@ final class SorteoFiestaTest extends TestCase
         $this->expectExceptionMessage('cada grupo necesita al menos 2');
         SorteoFiesta::sortear([1, 2, 3, 4, 5], false, SorteoFiesta::GRUPOS, 3);
     }
+
+    public function test_formato_invalido_se_rechaza(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Formato de torneo inválido');
+        SorteoFiesta::validar(4, false, 'LIGA', 1);
+    }
+
+    public function test_grupos_menor_a_uno_se_rechaza(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('al menos 1 grupo');
+        SorteoFiesta::validar(4, false, SorteoFiesta::GRUPOS, 0);
+    }
+
+    public function test_individual_con_menos_de_dos_participantes_se_rechaza(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('al menos 2 participantes');
+        SorteoFiesta::sortear([1], false, SorteoFiesta::ELIMINACION);
+    }
+
+    public function test_un_solo_grupo_asigna_todos_al_grupo_uno(): void
+    {
+        $r = SorteoFiesta::sortear([1, 2, 3, 4], false, SorteoFiesta::GRUPOS, 1, self::identidad(), 2);
+
+        $this->assertSame([1 => 1, 2 => 1, 3 => 1, 4 => 1], $r['grupos']);
+        $this->assertCount(4, $r['guion']);
+    }
+
+    public function test_validar_clasificados_rechaza_mas_clasificados_que_el_grupo_mas_chico(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('grupo más chico tendría 2 equipos');
+        SorteoFiesta::validarClasificados(2, 3, 5);
+    }
+
+    public function test_validar_clasificados_rechaza_un_grupo_con_un_solo_clasificado(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('al menos 2 equipos');
+        SorteoFiesta::validarClasificados(1, 1, 4);
+    }
+
+    public function test_validar_invoca_validar_clasificados_en_formato_grupos(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('al menos 2 equipos');
+        SorteoFiesta::validar(4, false, SorteoFiesta::GRUPOS, 1, 1);
+    }
+
+    public function test_validar_ignora_clasificados_en_formato_eliminacion(): void
+    {
+        SorteoFiesta::validar(4, false, SorteoFiesta::ELIMINACION, 1, 1);
+        $this->addToAssertionCount(1);
+    }
 }

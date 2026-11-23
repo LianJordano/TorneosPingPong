@@ -59,11 +59,13 @@ $err = static fn (string $k): string => isset($errors[$k])
 
 <script>
     (function () {
-        var radios = document.querySelectorAll('[data-formato]');
-        var bloque = document.querySelector('[data-solo-grupos]');
+        var script = document.currentScript;
+        var root = (script && script.closest('form')) || document;
+        var radios = root.querySelectorAll('[data-formato]');
+        var bloque = root.querySelector('[data-solo-grupos]');
         if (!bloque) { return; }
         function sync() {
-            var grupos = document.querySelector('[data-formato]:checked');
+            var grupos = root.querySelector('[data-formato]:checked');
             bloque.hidden = !grupos || grupos.value !== 'GRUPOS';
         }
         radios.forEach(function (r) { r.addEventListener('change', sync); });

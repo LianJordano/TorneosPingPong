@@ -333,6 +333,7 @@ CREATE TABLE IF NOT EXISTS fiesta_partido (
     estado             ENUM('PENDIENTE','FINALIZADO') NOT NULL DEFAULT 'PENDIENTE',
     updated_at         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
+    UNIQUE KEY uq_fiesta_partido_slot (fiesta_id, fase, ronda, orden),
     KEY idx_fiesta_partido_fase (fiesta_id, fase),
     CONSTRAINT fk_fiesta_partido_fiesta FOREIGN KEY (fiesta_id) REFERENCES fiesta(id) ON DELETE CASCADE,
     CONSTRAINT fk_fiesta_partido_a FOREIGN KEY (equipo_a_id) REFERENCES fiesta_equipo(id) ON DELETE CASCADE,
