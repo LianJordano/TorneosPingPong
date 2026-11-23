@@ -4,7 +4,7 @@
 /** @var list<array<string,mixed>> $disponibles */
 $errors = $errors ?? [];
 $old = $old ?? [];
-$cfg = $old + ['modalidad' => 'DOBLES', 'formato' => 'ELIMINACION', 'num_grupos' => 2, 'clasificados_por_grupo' => 2];
+$cfg = $old + ['modalidad' => 'DOBLES', 'formato' => 'ELIMINACION', 'num_grupos' => 2, 'clasificados_por_grupo' => 2, 'mejor_de' => 1];
 ?>
 <nav aria-label="Ruta">
     <ol class="breadcrumbs">

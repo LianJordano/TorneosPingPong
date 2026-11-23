@@ -18,7 +18,8 @@ use PingPong\Repository\FiestaRepository;
 final class FiestaService
 {
     public const MODALIDADES = ['INDIVIDUAL', 'DOBLES'];
-    public const FORMATOS = [SorteoFiesta::ELIMINACION, SorteoFiesta::GRUPOS];
+    public const FORMATOS = [SorteoFiesta::ELIMINACION, SorteoFiesta::GRUPOS, SorteoFiesta::LIGA];
+    public const MEJOR_DE_OPCIONES = [1, 3, 5];
 
     public function __construct(
         private FiestaRepository $fiestas,
@@ -50,7 +51,7 @@ final class FiestaService
      * triggering validation errors.
      *
      * @param array<string,mixed> $input
-     * @return array{0:array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int},1:array<string,string>}
+     * @return array{0:array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int,mejor_de:int,sets_rondas_json:?string},1:array<string,string>}
      */
     public static function validarConfig(array $input): array
     {
@@ -68,8 +69,39 @@ final class FiestaService
             $errors['modalidad'] = 'Elegí individual o dobles.';
         }
         if (!in_array($formato, self::FORMATOS, true)) {
-            $errors['formato'] = 'Elegí eliminación directa o grupos.';
+            $errors['formato'] = 'Elegí eliminación directa, grupos o liga.';
         }
+
+        $rawMejorDe = $input['mejor_de'] ?? 1;
+        if ($rawMejorDe === '' || $rawMejorDe === null) {
+            $mejorDe = 1;
+        } else {
+            $mejorDe = self::parseEnteroEstricto($rawMejorDe);
+            if ($mejorDe === null || !in_array($mejorDe, self::MEJOR_DE_OPCIONES, true)) {
+                $errors['mejor_de'] = 'Elegí 1 set, mejor de 3 o mejor de 5.';
+                $mejorDe = 1;
+            }
+        }
+
+        $overrides = [];
+        $mapaOverrides = [
+            'mejor_de_elim'  => 'eliminatoria',
+            'mejor_de_semis' => 'semifinal',
+            'mejor_de_final' => 'final',
+        ];
+        foreach ($mapaOverrides as $field => $jsonKey) {
+            $rawOverride = $input[$field] ?? null;
+            if ($rawOverride === null || (is_string($rawOverride) && trim($rawOverride) === '')) {
+                continue;
+            }
+            $val = self::parseEnteroEstricto($rawOverride);
+            if ($val === null || !in_array($val, self::MEJOR_DE_OPCIONES, true)) {
+                $errors[$field] = 'Elegí 1 set, mejor de 3, mejor de 5 o dejalo igual al base.';
+                continue;
+            }
+            $overrides[$jsonKey] = $val;
+        }
+        $setsRondasJson = $overrides === [] ? null : json_encode($overrides, JSON_THROW_ON_ERROR);
 
         if ($formato === SorteoFiesta::GRUPOS) {
             $numGrupos = self::parseEnteroEstricto($input['num_grupos'] ?? null);
@@ -83,6 +115,14 @@ final class FiestaService
                 $errors['clasificados_por_grupo'] = 'Los clasificados por grupo van de 1 a 8.';
                 $clasificados = 2;
             }
+        } elseif ($formato === SorteoFiesta::LIGA) {
+            $numGrupos = 1;
+            $clasificados = self::parseEnteroEstricto($input['clasificados_por_grupo'] ?? null);
+
+            if ($clasificados === null || $clasificados < 2 || $clasificados > 8) {
+                $errors['clasificados_por_grupo'] = 'Los clasificados a la eliminatoria van de 2 a 8.';
+                $clasificados = 2;
+            }
         } else {
             $numGrupos = 2;
             $clasificados = 2;
@@ -94,7 +134,78 @@ final class FiestaService
             'formato'                => $formato,
             'num_grupos'             => $numGrupos,
             'clasificados_por_grupo' => $clasificados,
+            'mejor_de'               => $mejorDe,
+            'sets_rondas_json'       => $setsRondasJson,
         ], $errors];
+    }
+
+    /**
+     * Parses valid per-round sets overrides from JSON.
+     *
+     * @return array{eliminatoria?:int,semifinal?:int,final?:int}
+     */
+    public static function parsearSetsRondas(?string $json): array
+    {
+        if ($json === null || trim($json) === '') {
+            return [];
+        }
+        $decoded = json_decode($json, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        $overrides = [];
+        foreach (['eliminatoria', 'semifinal', 'final'] as $key) {
+            if (!isset($decoded[$key])) {
+                continue;
+            }
+            $val = self::parseEnteroEstricto($decoded[$key]);
+            if ($val !== null && in_array($val, self::MEJOR_DE_OPCIONES, true)) {
+                $overrides[$key] = $val;
+            }
+        }
+        return $overrides;
+    }
+
+    /**
+     * Resolves the effective best-of (1, 3, or 5) for a specific match,
+     * applying optional per-round overrides (eliminatoria, semifinal, final).
+     *
+     * @param array<string,mixed> $fiesta
+     * @param array<string,mixed> $partido
+     */
+    public static function mejorDeParaPartido(array $fiesta, array $partido, int $totalRondasElim = 0): int
+    {
+        $base = (int) ($fiesta['mejor_de'] ?? 1);
+        if (!in_array($base, self::MEJOR_DE_OPCIONES, true)) {
+            $base = 1;
+        }
+
+        $fase = (string) ($partido['fase'] ?? '');
+        if ($fase === 'GRUPOS') {
+            return $base;
+        }
+
+        $overrides = self::parsearSetsRondas(
+            is_string($fiesta['sets_rondas_json'] ?? null) ? $fiesta['sets_rondas_json'] : null
+        );
+
+        if ($fase === 'ELIMINATORIA') {
+            $ronda = (int) ($partido['ronda'] ?? 0);
+            $esFinal = ($partido['siguiente_id'] ?? null) === null
+                || ($totalRondasElim > 0 && $ronda === $totalRondasElim);
+            if ($esFinal) {
+                return $overrides['final'] ?? $overrides['eliminatoria'] ?? $base;
+            }
+
+            $esSemifinal = $totalRondasElim >= 2 && $ronda === $totalRondasElim - 1;
+            if ($esSemifinal) {
+                return $overrides['semifinal'] ?? $overrides['eliminatoria'] ?? $base;
+            }
+
+            return $overrides['eliminatoria'] ?? $base;
+        }
+
+        return $base;
     }
 
     /**
@@ -114,6 +225,90 @@ final class FiestaService
             throw new \DomainException('No puede haber empate: alguien tiene que ganar.');
         }
         return [$ma, $mb];
+    }
+
+    /**
+     * Validates a match score for 1-set, best-of-3, or best-of-5 formats.
+     *
+     * @param list<mixed> $setsA
+     * @param list<mixed> $setsB
+     * @return array{marcador_a:int,marcador_b:int,sets:?list<array{a:int,b:int}>}
+     * @throws \DomainException
+     */
+    public static function validarMarcadorSets(int $mejorDe, array $setsA, array $setsB): array
+    {
+        if (!in_array($mejorDe, self::MEJOR_DE_OPCIONES, true)) {
+            throw new \DomainException('Formato de sets inválido.');
+        }
+
+        if ($mejorDe === 1) {
+            $rawA = array_key_exists(0, $setsA) && $setsA[0] !== null ? (string) $setsA[0] : null;
+            $rawB = array_key_exists(0, $setsB) && $setsB[0] !== null ? (string) $setsB[0] : null;
+            [$ma, $mb] = self::validarMarcador($rawA, $rawB);
+            return [
+                'marcador_a' => $ma,
+                'marcador_b' => $mb,
+                'sets'       => null,
+            ];
+        }
+
+        $target = intdiv($mejorDe, 2) + 1;
+        $maxIter = max($mejorDe, count($setsA), count($setsB));
+        $winsA = 0;
+        $winsB = 0;
+        $sets = [];
+        $huboVacio = false;
+
+        for ($i = 0; $i < $maxIter; $i++) {
+            $rawA = array_key_exists($i, $setsA) && $setsA[$i] !== null ? trim((string) $setsA[$i]) : '';
+            $rawB = array_key_exists($i, $setsB) && $setsB[$i] !== null ? trim((string) $setsB[$i]) : '';
+            $vacioA = $rawA === '';
+            $vacioB = $rawB === '';
+
+            if ($vacioA && $vacioB) {
+                $huboVacio = true;
+                continue;
+            }
+
+            if ($i >= $mejorDe) {
+                throw new \DomainException("En un partido al mejor de {$mejorDe} no se pueden cargar más de {$mejorDe} sets.");
+            }
+            if ($huboVacio) {
+                throw new \DomainException('Completá los sets en orden, sin dejar sets vacíos en el medio.');
+            }
+            if ($vacioA !== $vacioB) {
+                throw new \DomainException('Set ' . ($i + 1) . ': cargá el puntaje de los dos lados.');
+            }
+            if ($winsA >= $target || $winsB >= $target) {
+                throw new \DomainException('El partido ya se definió: no cargues sets extra.');
+            }
+
+            $a = self::parseEnteroEstricto($rawA);
+            $b = self::parseEnteroEstricto($rawB);
+            if ($a === null || $b === null || $a < 0 || $b < 0 || $a > 999 || $b > 999) {
+                throw new \DomainException('Set ' . ($i + 1) . ': cargá números enteros de 0 a 999.');
+            }
+            if ($a === $b) {
+                throw new \DomainException('Set ' . ($i + 1) . ': no puede haber empate en un set.');
+            }
+
+            $sets[] = ['a' => $a, 'b' => $b];
+            if ($a > $b) {
+                $winsA++;
+            } else {
+                $winsB++;
+            }
+        }
+
+        if ($winsA < $target && $winsB < $target) {
+            throw new \DomainException("El partido todavía no se definió: un lado tiene que ganar {$target} sets.");
+        }
+
+        return [
+            'marcador_a' => $winsA,
+            'marcador_b' => $winsB,
+            'sets'       => $sets,
+        ];
     }
 
     /**
@@ -144,7 +339,7 @@ final class FiestaService
         return [
             'modalidad'     => $fiesta['modalidad'],
             'formato'       => (string) $fiesta['formato'],
-            'numGrupos'     => (int) $fiesta['num_grupos'],
+            'numGrupos'     => $fiesta['formato'] === SorteoFiesta::LIGA ? 1 : (int) $fiesta['num_grupos'],
             'participantes' => $nombres,
             'equipos'       => $equipos,
             'pasos'         => $sorteo['guion'],
@@ -250,13 +445,15 @@ final class FiestaService
         }
 
         $dobles = $fiesta['modalidad'] === 'DOBLES';
+        $formato = (string) $fiesta['formato'];
+        $numGrupos = $formato === SorteoFiesta::LIGA ? 1 : (int) $fiesta['num_grupos'];
         $errorSorteo = null;
         try {
             SorteoFiesta::validar(
                 count($participantes),
                 $dobles,
-                (string) $fiesta['formato'],
-                (int) $fiesta['num_grupos'],
+                $formato,
+                $numGrupos,
                 (int) $fiesta['clasificados_por_grupo'],
             );
         } catch (\DomainException $e) {
@@ -301,7 +498,7 @@ final class FiestaService
 
     /**
      * @param array<string,mixed> $fiestaAnterior
-     * @param array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int} $data
+     * @param array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int,mejor_de:int,sets_rondas_json:?string} $data
      */
     public function actualizarConfig(array $fiestaAnterior, array $data, ?int $usuarioId): void
     {
@@ -313,6 +510,8 @@ final class FiestaService
             'formato'                => $fiestaAnterior['formato'],
             'num_grupos'             => (int) $fiestaAnterior['num_grupos'],
             'clasificados_por_grupo' => (int) $fiestaAnterior['clasificados_por_grupo'],
+            'mejor_de'               => (int) ($fiestaAnterior['mejor_de'] ?? 1),
+            'sets_rondas_json'       => $fiestaAnterior['sets_rondas_json'] ?? null,
         ], $data);
     }
 
@@ -351,7 +550,7 @@ final class FiestaService
         $participantes = $this->fiestas->participantes($id);
         $dobles = $fiesta['modalidad'] === 'DOBLES';
         $formato = (string) $fiesta['formato'];
-        $numGrupos = (int) $fiesta['num_grupos'];
+        $numGrupos = $formato === SorteoFiesta::LIGA ? 1 : (int) $fiesta['num_grupos'];
         $clasificados = (int) $fiesta['clasificados_por_grupo'];
 
         $sorteo = SorteoFiesta::sortear(
@@ -382,6 +581,8 @@ final class FiestaService
     /**
      * Records a match result atomically (closing or correcting the final as needed).
      *
+     * @param ?list<mixed> $setsA
+     * @param ?list<mixed> $setsB
      * @return array{es_final:bool,ganador_id:int}
      * @throws \DomainException
      */
@@ -392,9 +593,38 @@ final class FiestaService
         ?string $rawB,
         bool $esAdmin,
         ?int $usuarioId,
+        ?array $setsA = null,
+        ?array $setsB = null,
     ): array {
-        [$ma, $mb] = self::validarMarcador($rawA, $rawB);
-        $res = $this->fiestas->guardarResultado($fiestaId, $partidoId, $ma, $mb, $esAdmin);
+        $fiesta = $this->fiestas->find($fiestaId);
+        if ($fiesta === null) {
+            throw new \DomainException('La fiesta no existe.');
+        }
+
+        $partidoActual = $this->fiestas->findPartido($fiestaId, $partidoId);
+        if ($partidoActual === null) {
+            throw new \DomainException('Ese partido no existe.');
+        }
+
+        $totalRondasElim = 0;
+        if (($partidoActual['fase'] ?? '') === 'ELIMINATORIA') {
+            foreach ($this->fiestas->partidos($fiestaId, 'ELIMINATORIA') as $pe) {
+                $totalRondasElim = max($totalRondasElim, (int) $pe['ronda']);
+            }
+        }
+
+        $mejorDe = self::mejorDeParaPartido($fiesta, $partidoActual, $totalRondasElim);
+        if ($mejorDe > 1) {
+            $validado = self::validarMarcadorSets($mejorDe, $setsA ?? [], $setsB ?? []);
+            $ma = $validado['marcador_a'];
+            $mb = $validado['marcador_b'];
+            $setsJson = json_encode($validado['sets'], JSON_THROW_ON_ERROR);
+        } else {
+            [$ma, $mb] = self::validarMarcador($rawA, $rawB);
+            $setsJson = null;
+        }
+
+        $res = $this->fiestas->guardarResultado($fiestaId, $partidoId, $ma, $mb, $esAdmin, $setsJson);
         $partido = $res['partido'];
 
         $this->auditoria->registrar(
@@ -402,8 +632,8 @@ final class FiestaService
             $partidoId,
             'CARGAR_MARCADOR',
             $usuarioId,
-            ['a' => $partido['marcador_a'], 'b' => $partido['marcador_b']],
-            ['a' => $ma, 'b' => $mb],
+            ['a' => $partido['marcador_a'], 'b' => $partido['marcador_b'], 'sets_json' => $partido['sets_json'] ?? null],
+            ['a' => $ma, 'b' => $mb, 'sets_json' => $setsJson],
         );
 
         return [

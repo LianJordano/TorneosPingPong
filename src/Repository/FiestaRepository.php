@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PingPong\Repository;
 
 use PDO;
+use PingPong\Domain\Fiesta\SorteoFiesta;
 use PingPong\Domain\FixtureRoundRobin;
 
 /**
@@ -66,39 +67,44 @@ final class FiestaRepository
         return $row === false ? null : $row;
     }
 
-    /** @param array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int} $data */
+    /** @param array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int,mejor_de?:int,sets_rondas_json?:?string} $data */
     public function create(array $data, ?int $usuarioId): int
     {
         $stmt = $this->db->prepare(
-            'INSERT INTO fiesta (nombre, modalidad, formato, num_grupos, clasificados_por_grupo, created_by)
-             VALUES (:nombre, :modalidad, :formato, :grupos, :clasificados, :usuario)'
+            'INSERT INTO fiesta (nombre, modalidad, formato, num_grupos, clasificados_por_grupo, mejor_de, sets_rondas_json, created_by)
+             VALUES (:nombre, :modalidad, :formato, :grupos, :clasificados, :mejor_de, :sets_rondas_json, :usuario)'
         );
         $stmt->execute([
-            ':nombre'       => $data['nombre'],
-            ':modalidad'    => $data['modalidad'],
-            ':formato'      => $data['formato'],
-            ':grupos'       => $data['num_grupos'],
-            ':clasificados' => $data['clasificados_por_grupo'],
-            ':usuario'      => $usuarioId,
+            ':nombre'           => $data['nombre'],
+            ':modalidad'        => $data['modalidad'],
+            ':formato'          => $data['formato'],
+            ':grupos'           => $data['num_grupos'],
+            ':clasificados'     => $data['clasificados_por_grupo'],
+            ':mejor_de'         => $data['mejor_de'] ?? 1,
+            ':sets_rondas_json' => $data['sets_rondas_json'] ?? null,
+            ':usuario'          => $usuarioId,
         ]);
         return (int) $this->db->lastInsertId();
     }
 
-    /** @param array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int} $data */
+    /** @param array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int,mejor_de?:int,sets_rondas_json?:?string} $data */
     public function actualizarConfig(int $id, array $data): void
     {
         $stmt = $this->db->prepare(
             'UPDATE fiesta SET nombre = :nombre, modalidad = :modalidad, formato = :formato,
-                    num_grupos = :grupos, clasificados_por_grupo = :clasificados
+                    num_grupos = :grupos, clasificados_por_grupo = :clasificados,
+                    mejor_de = :mejor_de, sets_rondas_json = :sets_rondas_json
              WHERE id = :id'
         );
         $stmt->execute([
-            ':nombre'       => $data['nombre'],
-            ':modalidad'    => $data['modalidad'],
-            ':formato'      => $data['formato'],
-            ':grupos'       => $data['num_grupos'],
-            ':clasificados' => $data['clasificados_por_grupo'],
-            ':id'           => $id,
+            ':nombre'           => $data['nombre'],
+            ':modalidad'        => $data['modalidad'],
+            ':formato'          => $data['formato'],
+            ':grupos'           => $data['num_grupos'],
+            ':clasificados'     => $data['clasificados_por_grupo'],
+            ':mejor_de'         => $data['mejor_de'] ?? 1,
+            ':sets_rondas_json' => $data['sets_rondas_json'] ?? null,
+            ':id'               => $id,
         ]);
     }
 
@@ -256,7 +262,7 @@ final class FiestaRepository
                 $idPorNumero[$e['numero']] = (int) $this->db->lastInsertId();
             }
 
-            if ($formato === 'GRUPOS') {
+            if ($formato === SorteoFiesta::GRUPOS || $formato === SorteoFiesta::LIGA) {
                 $porGrupo = [];
                 foreach ($sorteo['orden'] as $numero) {
                     $porGrupo[$sorteo['grupos'][$numero]][] = $idPorNumero[$numero];
@@ -380,8 +386,9 @@ final class FiestaRepository
         int $marcadorA,
         int $marcadorB,
         bool $puedeCorregirFinal = false,
+        ?string $setsJson = null,
     ): array {
-        return $this->transaccion(function () use ($fiestaId, $partidoId, $marcadorA, $marcadorB, $puedeCorregirFinal): array {
+        return $this->transaccion(function () use ($fiestaId, $partidoId, $marcadorA, $marcadorB, $puedeCorregirFinal, $setsJson): array {
             $estadoFiesta = $this->bloquearEstado($fiestaId);
             if ($estadoFiesta === null) {
                 throw new \DomainException('La fiesta no existe.');
@@ -415,9 +422,15 @@ final class FiestaRepository
 
             $this->db->prepare(
                 "UPDATE fiesta_partido
-                 SET marcador_a = :ma, marcador_b = :mb, ganador_id = :g, estado = 'FINALIZADO'
+                 SET marcador_a = :ma, marcador_b = :mb, sets_json = :sets_json, ganador_id = :g, estado = 'FINALIZADO'
                  WHERE id = :id"
-            )->execute([':ma' => $marcadorA, ':mb' => $marcadorB, ':g' => $ganadorId, ':id' => $partidoId]);
+            )->execute([
+                ':ma'        => $marcadorA,
+                ':mb'        => $marcadorB,
+                ':sets_json' => $setsJson,
+                ':g'         => $ganadorId,
+                ':id'        => $partidoId,
+            ]);
 
             if ($partido['fase'] === 'ELIMINATORIA' && $partido['siguiente_id'] !== null) {
                 $columna = (int) $partido['orden'] % 2 === 0 ? 'equipo_a_id' : 'equipo_b_id';

@@ -11,9 +11,11 @@ CREATE TABLE IF NOT EXISTS fiesta (
     id                      INT UNSIGNED NOT NULL AUTO_INCREMENT,
     nombre                  VARCHAR(150) NOT NULL,
     modalidad               ENUM('INDIVIDUAL','DOBLES') NOT NULL DEFAULT 'DOBLES',
-    formato                 ENUM('ELIMINACION','GRUPOS') NOT NULL DEFAULT 'ELIMINACION',
+    formato                 ENUM('ELIMINACION','GRUPOS','LIGA') NOT NULL DEFAULT 'ELIMINACION',
     num_grupos              TINYINT UNSIGNED NOT NULL DEFAULT 2,
     clasificados_por_grupo  TINYINT UNSIGNED NOT NULL DEFAULT 2,
+    mejor_de                TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    sets_rondas_json        TEXT NULL,
     -- INSCRIPCION → (sorteo) → GRUPOS | ELIMINATORIA → FINALIZADO
     estado                  ENUM('INSCRIPCION','GRUPOS','ELIMINATORIA','FINALIZADO')
                                 NOT NULL DEFAULT 'INSCRIPCION',
@@ -27,7 +29,8 @@ CREATE TABLE IF NOT EXISTS fiesta (
     KEY idx_fiesta_estado (estado),
     CONSTRAINT fk_fiesta_usuario FOREIGN KEY (created_by) REFERENCES usuario(id) ON DELETE SET NULL,
     CONSTRAINT chk_fiesta_grupos      CHECK (num_grupos BETWEEN 1 AND 16),
-    CONSTRAINT chk_fiesta_clasificados CHECK (clasificados_por_grupo BETWEEN 1 AND 8)
+    CONSTRAINT chk_fiesta_clasificados CHECK (clasificados_por_grupo BETWEEN 1 AND 8),
+    CONSTRAINT chk_fiesta_mejor_de     CHECK (mejor_de IN (1, 3, 5))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- fiesta_participante — jugadores de la plataforma (persona) anotados en la fiesta
@@ -70,6 +73,7 @@ CREATE TABLE IF NOT EXISTS fiesta_partido (
     equipo_b_id        INT UNSIGNED NULL,
     marcador_a         SMALLINT UNSIGNED NULL,
     marcador_b         SMALLINT UNSIGNED NULL,
+    sets_json          TEXT NULL,
     ganador_id         INT UNSIGNED NULL,
     es_bye             TINYINT(1) NOT NULL DEFAULT 0,
     siguiente_id       INT UNSIGNED NULL,

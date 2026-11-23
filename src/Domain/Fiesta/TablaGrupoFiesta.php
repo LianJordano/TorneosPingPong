@@ -17,10 +17,12 @@ use PingPong\Domain\BracketEliminacion;
  */
 final class TablaGrupoFiesta
 {
+    public const PUNTOS_VICTORIA = 3;
+
     /**
      * @param list<int> $equipos team ids in the group
      * @param list<array{a:int,b:int,ma:int,mb:int,ganador:int}> $partidos finished group matches
-     * @return list<array{equipo:int,posicion:int,pj:int,pg:int,pp:int,favor:int,contra:int,diferencia:int}>
+     * @return list<array{equipo:int,posicion:int,pj:int,pg:int,pp:int,puntos:int,favor:int,contra:int,diferencia:int}>
      */
     public static function calcular(array $equipos, array $partidos): array
     {
@@ -40,7 +42,7 @@ final class TablaGrupoFiesta
     /**
      * @param list<int> $equipos
      * @param list<array{a:int,b:int,ma:int,mb:int,ganador:int}> $partidos
-     * @return array<int,array{equipo:int,posicion:int,pj:int,pg:int,pp:int,favor:int,contra:int,diferencia:int}>
+     * @return array<int,array{equipo:int,posicion:int,pj:int,pg:int,pp:int,puntos:int,favor:int,contra:int,diferencia:int}>
      */
     private static function acumular(array $equipos, array $partidos): array
     {
@@ -52,6 +54,7 @@ final class TablaGrupoFiesta
                 'pj'         => 0,
                 'pg'         => 0,
                 'pp'         => 0,
+                'puntos'     => 0,
                 'favor'      => 0,
                 'contra'     => 0,
                 'diferencia' => 0,
@@ -69,6 +72,7 @@ final class TablaGrupoFiesta
                 $filas[$id]['diferencia'] = $filas[$id]['favor'] - $filas[$id]['contra'];
                 if ($p['ganador'] === $id) {
                     $filas[$id]['pg']++;
+                    $filas[$id]['puntos'] = $filas[$id]['pg'] * self::PUNTOS_VICTORIA;
                 } else {
                     $filas[$id]['pp']++;
                 }

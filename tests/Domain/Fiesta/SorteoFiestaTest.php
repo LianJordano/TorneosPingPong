@@ -110,7 +110,7 @@ final class SorteoFiestaTest extends TestCase
     {
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Formato de torneo inválido');
-        SorteoFiesta::validar(4, false, 'LIGA', 1);
+        SorteoFiesta::validar(4, false, 'SUIZO', 1);
     }
 
     public function test_grupos_menor_a_uno_se_rechaza(): void
@@ -160,5 +160,45 @@ final class SorteoFiestaTest extends TestCase
     {
         SorteoFiesta::validar(4, false, SorteoFiesta::ELIMINACION, 1, 1);
         $this->addToAssertionCount(1);
+    }
+
+    public function test_liga_dobles_asigna_todos_al_grupo_uno_sin_pasos_de_grupo(): void
+    {
+        $r = SorteoFiesta::sortear([1, 2, 3, 4, 5, 6], true, SorteoFiesta::LIGA, 1, self::identidad(), 2);
+
+        $this->assertSame([1 => 1, 2 => 1, 3 => 1], $r['grupos']);
+        $this->assertSame(0, $r['bracket']['tamano']);
+        $this->assertSame([], $r['bracket']['partidos']);
+        $this->assertSame(
+            ['capitan', 'capitan', 'capitan', 'companero', 'companero', 'companero'],
+            array_column($r['guion'], 'tipo'),
+        );
+    }
+
+    public function test_liga_individual_emite_pasos_tipo_liga_con_participante(): void
+    {
+        $r = SorteoFiesta::sortear([10, 20, 30, 40], false, SorteoFiesta::LIGA, 1, self::identidad(), 2);
+
+        $this->assertSame([1 => 1, 2 => 1, 3 => 1, 4 => 1], $r['grupos']);
+        $this->assertSame([
+            ['tipo' => 'liga', 'equipo' => 1, 'participante' => 10],
+            ['tipo' => 'liga', 'equipo' => 2, 'participante' => 20],
+            ['tipo' => 'liga', 'equipo' => 3, 'participante' => 30],
+            ['tipo' => 'liga', 'equipo' => 4, 'participante' => 40],
+        ], $r['guion']);
+    }
+
+    public function test_liga_rechaza_menos_de_dos_clasificados(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('al menos 2 equipos');
+        SorteoFiesta::validar(4, false, SorteoFiesta::LIGA, 1, 1);
+    }
+
+    public function test_liga_rechaza_mas_clasificados_que_equipos(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('grupo más chico tendría 3 equipos');
+        SorteoFiesta::validar(6, true, SorteoFiesta::LIGA, 1, 4);
     }
 }

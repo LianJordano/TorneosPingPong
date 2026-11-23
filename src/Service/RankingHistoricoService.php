@@ -248,8 +248,8 @@ final class RankingHistoricoService
                 'fase' => $fase,
                 'a_label' => (string) $m['a_label'],
                 'b_label' => (string) $m['b_label'],
-                'score' => $esFiesta ? ($puntosA . '-' . $puntosB) : ($setsA . '-' . $setsB),
-                'puntos' => $esFiesta ? '' : ($puntosA . '-' . $puntosB),
+                'score' => (!$esFiesta || ($setsA + $setsB) > 0) ? ($setsA . '-' . $setsB) : ($puntosA . '-' . $puntosB),
+                'puntos' => (!$esFiesta || ($setsA + $setsB) > 0) ? ($puntosA . '-' . $puntosB) : '',
                 'ganador_label' => $ganaA ? (string) $m['a_label'] : ($ganaB ? (string) $m['b_label'] : 'Sin ganador'),
                 'personas' => array_merge($aIds, $bIds),
             ];

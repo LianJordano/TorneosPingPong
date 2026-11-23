@@ -520,6 +520,76 @@ final class RankingHistoricoServiceTest extends TestCase
         $this->assertSame(1, $ranking2026[0]['torneos_finalizados_jugados']);
         $this->assertSame(11, $ranking2026[0]['puntos_favor']);
     }
+
+    public function test_fiesta_bo3_acredita_sets_reales_y_puntos_sumados_en_ranking_y_perfil(): void
+    {
+        $repo = new FakeEstadisticaJugadorRepository(
+            personas: [
+                ['id' => 1, 'nombre' => 'Ana', 'apellido' => 'Gomez', 'area' => 'Tech', 'nivel' => 'A', 'activo' => 1],
+                ['id' => 2, 'nombre' => 'Beto', 'apellido' => 'Perez', 'area' => 'Tech', 'nivel' => 'A', 'activo' => 1],
+            ],
+            torneos: [
+                [
+                    'origen' => 'FIESTA', 'id' => 30, 'nombre' => 'Fiesta Bo3', 'modalidad' => 'INDIVIDUAL',
+                    'puntos_por_victoria' => 2, 'fecha_inicio' => '2026-11-23', 'fecha_fin' => '2026-11-23',
+                    'created_at' => '2026-11-23 19:00:00',
+                ],
+            ],
+            inscripciones: [
+                [
+                    'origen' => 'FIESTA', 'id' => 301, 'torneo_id' => 30, 'persona_id' => 1, 'persona_id_2' => null,
+                    'torneo_nombre' => 'Fiesta Bo3', 'modalidad' => 'INDIVIDUAL',
+                    'fecha_inicio' => '2026-11-23', 'fecha_fin' => '2026-11-23', 'created_at' => '2026-11-23 19:00:00',
+                    'persona_label' => 'Gomez, Ana', 'persona_2_label' => null, 'label' => 'Gomez, Ana',
+                ],
+                [
+                    'origen' => 'FIESTA', 'id' => 302, 'torneo_id' => 30, 'persona_id' => 2, 'persona_id_2' => null,
+                    'torneo_nombre' => 'Fiesta Bo3', 'modalidad' => 'INDIVIDUAL',
+                    'fecha_inicio' => '2026-11-23', 'fecha_fin' => '2026-11-23', 'created_at' => '2026-11-23 19:00:00',
+                    'persona_label' => 'Perez, Beto', 'persona_2_label' => null, 'label' => 'Perez, Beto',
+                ],
+            ],
+            partidos: [
+                // Ana gana 2-1 con parciales 11-8, 9-11, 11-6 => puntos 31-25
+                [
+                    'origen' => 'FIESTA', 'id' => 701, 'torneo_id' => 30, 'fase' => 'ELIMINATORIA', 'ronda' => 1, 'orden_en_ronda' => 0,
+                    'estado' => 'FINALIZADO', 'tipo_resultado' => 'NORMAL',
+                    'inscripcion_a_id' => 301, 'inscripcion_b_id' => 302, 'ganador_inscripcion_id' => 301,
+                    'torneo_nombre' => 'Fiesta Bo3', 'modalidad' => 'INDIVIDUAL',
+                    'fecha_inicio' => '2026-11-23', 'fecha_fin' => '2026-11-23', 'created_at' => '2026-11-23 19:00:00',
+                    'a_persona_id' => 1, 'a_persona_id_2' => null, 'b_persona_id' => 2, 'b_persona_id_2' => null,
+                    'a_label' => 'Gomez, Ana', 'b_label' => 'Perez, Beto',
+                    'sets_a' => 2, 'sets_b' => 1, 'puntos_a' => 31, 'puntos_b' => 25,
+                ],
+            ],
+            jugadoresPorTorneo: [
+                'FIESTA:30' => [['id' => 301, 'nombre' => 'Gomez, Ana'], ['id' => 302, 'nombre' => 'Perez, Beto']],
+            ],
+            ligaPorTorneo: ['FIESTA:30' => []],
+            bracketPorTorneo: [
+                'FIESTA:30' => [['a' => 301, 'b' => 302, 'ganador' => 301, 'ronda' => 1, 'estado' => 'FINALIZADO']],
+            ],
+        );
+
+        $service = new RankingHistoricoService($repo);
+        $perfilAna = $service->perfil(1);
+        $perfilBeto = $service->perfil(2);
+
+        $this->assertNotNull($perfilAna);
+        $this->assertNotNull($perfilBeto);
+
+        $this->assertSame(2, $perfilAna['stats']['sets_ganados']);
+        $this->assertSame(1, $perfilAna['stats']['sets_perdidos']);
+        $this->assertSame(31, $perfilAna['stats']['puntos_favor']);
+        $this->assertSame(25, $perfilAna['stats']['puntos_contra']);
+        $this->assertSame('2-1', $perfilAna['partidosRecientes'][0]['score']);
+        $this->assertSame('31-25', $perfilAna['partidosRecientes'][0]['puntos']);
+
+        $this->assertSame(1, $perfilBeto['stats']['sets_ganados']);
+        $this->assertSame(2, $perfilBeto['stats']['sets_perdidos']);
+        $this->assertSame(25, $perfilBeto['stats']['puntos_favor']);
+        $this->assertSame(31, $perfilBeto['stats']['puntos_contra']);
+    }
 }
 
 final class FakeEstadisticaJugadorRepository implements EstadisticaJugadorRepositoryInterface

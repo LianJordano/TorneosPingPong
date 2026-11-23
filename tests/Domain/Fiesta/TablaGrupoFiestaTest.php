@@ -179,4 +179,34 @@ final class TablaGrupoFiestaTest extends TestCase
         // Pigeonhole minimum is 1; naive candidate[0] could have more, our fallback must achieve the minimum (1).
         $this->assertSame(1, $choques);
     }
+
+    public function test_calcular_incluye_puntos_como_victorias_por_tres(): void
+    {
+        $tabla = TablaGrupoFiesta::calcular([1, 2, 3], [
+            ['a' => 1, 'b' => 2, 'ma' => 11, 'mb' => 5, 'ganador' => 1],
+            ['a' => 1, 'b' => 3, 'ma' => 11, 'mb' => 7, 'ganador' => 1],
+            ['a' => 2, 'b' => 3, 'ma' => 11, 'mb' => 9, 'ganador' => 2],
+        ]);
+
+        $this->assertSame(3, TablaGrupoFiesta::PUNTOS_VICTORIA);
+        $this->assertSame([1, 2, 3], array_column($tabla, 'equipo'));
+        $this->assertSame([6, 3, 0], array_column($tabla, 'puntos'));
+        $this->assertSame([2, 1, 0], array_column($tabla, 'pg'));
+    }
+
+    public function test_siembra_de_liga_unica_preserva_orden_y_cruza_primero_contra_cuarto(): void
+    {
+        $orden = TablaGrupoFiesta::sembrar([1 => [10, 20, 30, 40, 50]], 4);
+
+        $this->assertSame([10, 20, 30, 40], $orden);
+
+        $bracket = BracketEliminacion::generar($orden);
+        $ronda1 = array_values(array_filter(
+            $bracket['partidos'],
+            static fn (array $p): bool => $p['ronda'] === 1,
+        ));
+        $this->assertCount(2, $ronda1);
+        $this->assertSame([10, 40], [$ronda1[0]['a'], $ronda1[0]['b']]);
+        $this->assertSame([20, 30], [$ronda1[1]['a'], $ronda1[1]['b']]);
+    }
 }

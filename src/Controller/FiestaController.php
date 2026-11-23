@@ -61,7 +61,12 @@ final class FiestaController extends Controller
             return $this->render('fiesta/form', [
                 'title'       => 'Nueva fiesta',
                 'errors'      => $errors,
-                'old'         => $data + ['persona_ids' => $personaIds],
+                'old'         => $data + [
+                    'persona_ids'    => $personaIds,
+                    'mejor_de_elim'  => Request::post('mejor_de_elim', ''),
+                    'mejor_de_semis' => Request::post('mejor_de_semis', ''),
+                    'mejor_de_final' => Request::post('mejor_de_final', ''),
+                ],
                 'disponibles' => $this->service->jugadoresActivos(),
             ]);
         }
@@ -219,6 +224,9 @@ final class FiestaController extends Controller
             return $this->csrfFail($back);
         }
 
+        $setsA = isset($_POST['sets_a']) && is_array($_POST['sets_a']) ? array_values($_POST['sets_a']) : null;
+        $setsB = isset($_POST['sets_b']) && is_array($_POST['sets_b']) ? array_values($_POST['sets_b']) : null;
+
         try {
             $res = $this->service->guardarResultado(
                 $id,
@@ -227,6 +235,8 @@ final class FiestaController extends Controller
                 Request::post('marcador_b'),
                 Auth::puedeGestionar(),
                 Auth::user()['id'] ?? null,
+                $setsA,
+                $setsB,
             );
         } catch (\DomainException $e) {
             Session::flash('error', $e->getMessage());
@@ -300,7 +310,7 @@ final class FiestaController extends Controller
         return [$fiesta, null];
     }
 
-    /** @return array{0:array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int},1:array<string,string>} */
+    /** @return array{0:array{nombre:string,modalidad:string,formato:string,num_grupos:int,clasificados_por_grupo:int,mejor_de:int,sets_rondas_json:?string},1:array<string,string>} */
     private function leerConfig(): array
     {
         return FiestaService::validarConfig([
@@ -309,6 +319,10 @@ final class FiestaController extends Controller
             'formato'                => Request::post('formato', 'ELIMINACION'),
             'num_grupos'             => Request::post('num_grupos', '2'),
             'clasificados_por_grupo' => Request::post('clasificados_por_grupo', '2'),
+            'mejor_de'               => Request::post('mejor_de', '1'),
+            'mejor_de_elim'          => Request::post('mejor_de_elim', ''),
+            'mejor_de_semis'         => Request::post('mejor_de_semis', ''),
+            'mejor_de_final'         => Request::post('mejor_de_final', ''),
         ]);
     }
 

@@ -59,6 +59,7 @@
         capitan: 'Primeros integrantes',
         companero: 'Compañeros',
         grupo: 'Reparto de grupos',
+        liga: 'Liga · Todos contra todos',
         llave: 'Cruces de la llave'
     };
 
@@ -381,11 +382,11 @@
     // ------------------------------------------------------------------
     //  Board
     // ------------------------------------------------------------------
-    var board = { pairs: null, groups: null, bracket: null };
+    var board = { pairs: null, groups: null, league: null, bracket: null };
 
     function buildBoard() {
         ui.board.textContent = '';
-        board = { pairs: null, groups: null, bracket: null };
+        board = { pairs: null, groups: null, league: null, bracket: null };
         var numEquipos = Object.keys(G.equipos).length;
 
         if (dobles) {
@@ -423,6 +424,22 @@
             }
             wrapG.appendChild(cols);
             ui.board.appendChild(wrapG);
+        } else if (G.formato === 'LIGA') {
+            var hasLigaSteps = pasos.some(function (p) { return p.tipo === 'liga'; });
+            if (hasLigaSteps) {
+                var wrapL = el('section', 'rt-panel');
+                wrapL.appendChild(el('h2', 'rt-panel__title', 'Liga · Todos contra todos'));
+                var colL = el('div', 'rt-group rt-league');
+                var headL = el('div', 'rt-league__head');
+                headL.appendChild(el('span', 'rt-group__letter', 'L'));
+                headL.appendChild(el('span', 'rt-league__title', 'Orden de la liga'));
+                colL.appendChild(headL);
+                var listL = el('ol', 'rt-group__list rt-league__list');
+                colL.appendChild(listL);
+                wrapL.appendChild(colL);
+                ui.board.appendChild(wrapL);
+                board.league = { col: colL, list: listL, count: 0 };
+            }
         } else {
             var wrapB = el('section', 'rt-panel');
             wrapB.appendChild(el('h2', 'rt-panel__title', G.rondas > 1 ? 'Primera ronda' : 'Final'));
@@ -706,6 +723,18 @@
                 board.groups[paso.grupo].list.appendChild(li);
                 fill(li, equipoLabel(paso.equipo), silent);
                 return equipoLabel(paso.equipo) + ' → Grupo ' + letra(paso.grupo);
+            case 'liga':
+                state.placed[paso.equipo] = true;
+                var posLiga = board.league ? ++board.league.count : 1;
+                if (board.league) {
+                    var liLiga = el('li', 'rt-group__item rt-league__item');
+                    liLiga.appendChild(el('span', 'rt-league__num', '#' + posLiga));
+                    var nameLiga = el('span', 'rt-slot', '');
+                    liLiga.appendChild(nameLiga);
+                    board.league.list.appendChild(liLiga);
+                    fill(nameLiga, equipoLabel(paso.equipo), silent);
+                }
+                return '#' + posLiga + ' · ' + equipoLabel(paso.equipo);
             case 'llave':
                 state.placed[paso.equipo] = true;
                 var cruce = board.bracket[paso.partido];
@@ -1069,9 +1098,15 @@
     // ------------------------------------------------------------------
     var numEquipos = Object.keys(G.equipos).length;
     var numPart = Object.keys(G.participantes).length;
-    ui.introText.textContent = dobles
-        ? numPart + ' participantes, ' + numEquipos + ' parejas. Primero salen los primeros integrantes y después sus compañeros.'
-        : numPart + ' jugadores. La ruleta los va sacando de a uno.';
+    if (G.formato === 'LIGA') {
+        ui.introText.textContent = dobles
+            ? numPart + ' participantes, ' + numEquipos + ' parejas. Se sortean las parejas para jugar todos contra todos.'
+            : numPart + ' jugadores. Se sortea el orden de la liga todos contra todos.';
+    } else {
+        ui.introText.textContent = dobles
+            ? numPart + ' participantes, ' + numEquipos + ' parejas. Primero salen los primeros integrantes y después sus compañeros.'
+            : numPart + ' jugadores. La ruleta los va sacando de a uno.';
+    }
 
     reset(false);
     if (ui.resume && !ui.resume.hidden) {

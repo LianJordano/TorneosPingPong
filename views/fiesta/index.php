@@ -41,7 +41,17 @@ $estados = [
         <?php foreach ($fiestas as $f): ?>
             <?php
             [$estadoLabel, $estadoBadge] = $estados[$f['estado']] ?? [$f['estado'], 'badge--gray'];
+            if ($f['formato'] === 'LIGA' && $f['estado'] === 'GRUPOS') {
+                $estadoLabel = 'Fase de liga';
+            }
+            $formatoLabel = match ($f['formato']) {
+                'LIGA'   => 'Liga + eliminatoria',
+                'GRUPOS' => 'Grupos + eliminatoria',
+                default  => 'Eliminación directa',
+            };
             $dobles = $f['modalidad'] === 'DOBLES';
+            $mejorDe = (int) ($f['mejor_de'] ?? 1);
+            $setsLabel = $mejorDe === 1 ? '1 set' : "Mejor de {$mejorDe}";
             $url = '/fiesta/' . (string) $f['id'];
             ?>
             <a class="card card--interactive fiesta-card" href="<?= e($url) ?>">
@@ -50,7 +60,8 @@ $estados = [
                     <span class="fiesta-card__title"><?= e((string) $f['nombre']) ?></span>
                     <span class="fiesta-card__meta">
                         <?= $dobles ? 'Dobles' : 'Individual' ?> ·
-                        <?= $f['formato'] === 'GRUPOS' ? 'Grupos + eliminatoria' : 'Eliminación directa' ?> ·
+                        <?= e($formatoLabel) ?> ·
+                        <?= e($setsLabel) ?> ·
                         <?= e((string) $f['participantes']) ?> participantes
                     </span>
                 </span>

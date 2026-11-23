@@ -138,7 +138,7 @@ final class EstadisticaJugadorRepository implements EstadisticaJugadorRepository
                     fp.estado, 'NORMAL' AS tipo_resultado,
                     fp.equipo_a_id AS inscripcion_a_id, fp.equipo_b_id AS inscripcion_b_id,
                     fp.ganador_id AS ganador_inscripcion_id,
-                    f.nombre AS torneo_nombre, f.modalidad,
+                    f.nombre AS torneo_nombre, f.modalidad, f.mejor_de,
                     DATE(f.sorteado_at) AS fecha_inicio,
                     COALESCE(DATE(f.updated_at), DATE(f.sorteado_at), DATE(f.created_at)) AS fecha_fin,
                     f.created_at,
@@ -150,6 +150,9 @@ final class EstadisticaJugadorRepository implements EstadisticaJugadorRepository
                     CASE WHEN eb.participante_2_id IS NULL
                          THEN CONCAT(pb1.apellido, ', ', pb1.nombre)
                          ELSE CONCAT(pb1.apellido, ' / ', pb2.apellido) END AS b_label,
+                    COALESCE(fp.marcador_a, 0) AS marcador_a,
+                    COALESCE(fp.marcador_b, 0) AS marcador_b,
+                    fp.sets_json,
                     0 AS sets_a,
                     0 AS sets_b,
                     COALESCE(fp.marcador_a, 0) AS puntos_a,
@@ -176,6 +179,20 @@ final class EstadisticaJugadorRepository implements EstadisticaJugadorRepository
                       fp.ronda ASC, fp.orden ASC, fp.id ASC"
         )->fetchAll();
 
+        $fiestas = array_map(function (array $row): array {
+            $norm = self::normalizarSetsFiesta(
+                (int) ($row['mejor_de'] ?? 1),
+                $row['sets_json'] ?? null,
+                (int) ($row['marcador_a'] ?? 0),
+                (int) ($row['marcador_b'] ?? 0),
+            );
+            $row['sets_a'] = $norm['sets_a'];
+            $row['sets_b'] = $norm['sets_b'];
+            $row['puntos_a'] = $norm['puntos_a'];
+            $row['puntos_b'] = $norm['puntos_b'];
+            return $row;
+        }, $fiestas);
+
         return array_merge($regulares, $fiestas);
     }
 
@@ -185,11 +202,12 @@ final class EstadisticaJugadorRepository implements EstadisticaJugadorRepository
         if ($origen === 'FIESTA') {
             $stmt = $this->db->prepare(
                 "SELECT fp.equipo_a_id AS a, fp.equipo_b_id AS b, fp.ganador_id AS ganador,
-                        0 AS setsA,
-                        0 AS setsB,
-                        COALESCE(fp.marcador_a, 0) AS puntosA,
-                        COALESCE(fp.marcador_b, 0) AS puntosB
+                        f.mejor_de,
+                        fp.sets_json,
+                        COALESCE(fp.marcador_a, 0) AS marcador_a,
+                        COALESCE(fp.marcador_b, 0) AS marcador_b
                  FROM fiesta_partido fp
+                 JOIN fiesta f ON f.id = fp.fiesta_id
                  WHERE fp.fiesta_id = :t
                    AND fp.fase = 'GRUPOS'
                    AND fp.estado = 'FINALIZADO'
@@ -200,15 +218,23 @@ final class EstadisticaJugadorRepository implements EstadisticaJugadorRepository
             );
             $stmt->execute([':t' => $torneoId]);
 
-            return array_map(static fn (array $r): array => [
-                'a'       => (int) $r['a'],
-                'b'       => (int) $r['b'],
-                'ganador' => $r['ganador'] !== null ? (int) $r['ganador'] : null,
-                'setsA'   => (int) $r['setsA'],
-                'setsB'   => (int) $r['setsB'],
-                'puntosA' => (int) $r['puntosA'],
-                'puntosB' => (int) $r['puntosB'],
-            ], $stmt->fetchAll());
+            return array_map(static function (array $r): array {
+                $norm = self::normalizarSetsFiesta(
+                    (int) ($r['mejor_de'] ?? 1),
+                    $r['sets_json'] ?? null,
+                    (int) $r['marcador_a'],
+                    (int) $r['marcador_b'],
+                );
+                return [
+                    'a'       => (int) $r['a'],
+                    'b'       => (int) $r['b'],
+                    'ganador' => $r['ganador'] !== null ? (int) $r['ganador'] : null,
+                    'setsA'   => $norm['sets_a'],
+                    'setsB'   => $norm['sets_b'],
+                    'puntosA' => $norm['puntos_a'],
+                    'puntosB' => $norm['puntos_b'],
+                ];
+            }, $stmt->fetchAll());
         }
 
         $stmt = $this->db->prepare(
@@ -331,5 +357,47 @@ final class EstadisticaJugadorRepository implements EstadisticaJugadorRepository
             'ronda'   => (int) $r['ronda'],
             'estado'  => (string) $r['estado'],
         ], $stmt->fetchAll());
+    }
+
+    /**
+     * Normalizes sets and points for a party tournament match: whenever sets_json
+     * contains valid partial scores (even if fiesta.mejor_de === 1 with a per-round
+     * override like a Bo5 final), credits real sets (marcador_a/b) and sums partial
+     * points; otherwise keeps 0 sets and direct points.
+     *
+     * @return array{sets_a:int,sets_b:int,puntos_a:int,puntos_b:int}
+     */
+    private static function normalizarSetsFiesta(int $mejorDe, mixed $setsJson, int $marcadorA, int $marcadorB): array
+    {
+        if (is_string($setsJson) && $setsJson !== '') {
+            $decoded = json_decode($setsJson, true);
+            if (is_array($decoded) && $decoded !== []) {
+                $puntosA = 0;
+                $puntosB = 0;
+                $validos = 0;
+                foreach ($decoded as $set) {
+                    if (is_array($set) && isset($set['a'], $set['b'])) {
+                        $puntosA += (int) $set['a'];
+                        $puntosB += (int) $set['b'];
+                        $validos++;
+                    }
+                }
+                if ($validos > 0) {
+                    return [
+                        'sets_a'   => $marcadorA,
+                        'sets_b'   => $marcadorB,
+                        'puntos_a' => $puntosA,
+                        'puntos_b' => $puntosB,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'sets_a'   => 0,
+            'sets_b'   => 0,
+            'puntos_a' => $marcadorA,
+            'puntos_b' => $marcadorB,
+        ];
     }
 }

@@ -17,6 +17,8 @@ use PingPong\Domain\BracketEliminacion;
  * Then teams are shuffled again and placed one by one:
  *   - ELIMINACION: into a first-round bracket slot ("llave").
  *   - GRUPOS: into a group, dealt round-robin so group sizes differ by at most 1 ("grupo").
+ *   - LIGA: all teams into group 1; doubles keeps capitan/companero steps,
+ *     individual reveals league seed order ("liga").
  *
  * Teams are identified by their reveal number (1..N) because database ids do
  * not exist yet; the repository maps numbers to ids when persisting.
@@ -26,6 +28,7 @@ final class SorteoFiesta
 {
     public const ELIMINACION = 'ELIMINACION';
     public const GRUPOS = 'GRUPOS';
+    public const LIGA = 'LIGA';
 
     /**
      * @param list<int> $participantes participant ids
@@ -85,6 +88,17 @@ final class SorteoFiesta
                 $grupos[$numero] = $grupo;
                 $guion[] = ['tipo' => 'grupo', 'equipo' => $numero, 'grupo' => $grupo];
             }
+        } elseif ($formato === self::LIGA) {
+            $p1PorNumero = [];
+            foreach ($equipos as $e) {
+                $p1PorNumero[$e['numero']] = $e['p1'];
+            }
+            foreach ($orden as $numero) {
+                $grupos[$numero] = 1;
+                if (!$dobles) {
+                    $guion[] = ['tipo' => 'liga', 'equipo' => $numero, 'participante' => $p1PorNumero[$numero]];
+                }
+            }
         } else {
             $bracket = BracketEliminacion::generar($orden);
             $slot = [];
@@ -135,7 +149,7 @@ final class SorteoFiesta
         int $numGrupos,
         ?int $clasificadosPorGrupo = null,
     ): void {
-        if (!in_array($formato, [self::ELIMINACION, self::GRUPOS], true)) {
+        if (!in_array($formato, [self::ELIMINACION, self::GRUPOS, self::LIGA], true)) {
             throw new \DomainException('Formato de torneo inválido.');
         }
         if ($dobles && $participantes % 2 !== 0) {
@@ -155,6 +169,10 @@ final class SorteoFiesta
             }
             if ($clasificadosPorGrupo !== null) {
                 self::validarClasificados($numGrupos, $clasificadosPorGrupo, $equipos);
+            }
+        } elseif ($formato === self::LIGA) {
+            if ($clasificadosPorGrupo !== null) {
+                self::validarClasificados(1, $clasificadosPorGrupo, $equipos);
             }
         }
     }
