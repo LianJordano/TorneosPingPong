@@ -25,15 +25,25 @@ final class RankingController extends Controller
         $opciones = $this->ranking->opcionesFiltros();
         $filters = $this->filters($opciones);
 
-        $ranking = $this->ranking->ranking($filters);
-        $paginacion = $this->paginar($ranking);
+        $rankingCompleto = $this->ranking->ranking($filters);
+        $podio = array_slice($rankingCompleto, 0, 3);
+
+        $busqueda = trim((string) Request::query('q', ''));
+        $orden = $this->orden();
+
+        $rankingFiltrado = $this->filtrarYOrdenar($rankingCompleto, $busqueda, $orden);
+        $paginacion = $this->paginar($rankingFiltrado);
 
         return $this->render('ranking/index', [
-            'title' => 'Ranking historico',
-            'ranking' => $ranking,
+            'title' => 'Ranking histórico',
+            'ranking' => $rankingCompleto,
+            'rankingFiltrado' => $rankingFiltrado,
+            'podio' => $podio,
             'rows' => $paginacion['rows'],
             'paginacion' => $paginacion['meta'],
             'filters' => $filters,
+            'busqueda' => $busqueda,
+            'orden' => $orden,
             'opcionesFiltros' => $opciones,
         ]);
     }
@@ -113,5 +123,47 @@ final class RankingController extends Controller
             'area' => $area,
             'nivel' => $nivel,
         ];
+    }
+
+    private function orden(): string
+    {
+        $raw = strtolower(trim((string) Request::query('sort', 'score')));
+        $permitidos = ['score', 'win_rate', 'campeonatos', 'partidos_ganados', 'diferencial_puntos'];
+        return in_array($raw, $permitidos, true) ? $raw : 'score';
+    }
+
+    /**
+     * Filtra por texto (nombre o área) preservando el rank real y aplica orden secundario opcional.
+     *
+     * @param list<array<string,mixed>> $ranking
+     * @return list<array<string,mixed>>
+     */
+    private function filtrarYOrdenar(array $ranking, string $busqueda, string $orden): array
+    {
+        $lista = $ranking;
+
+        if ($busqueda !== '') {
+            $needle = mb_strtolower($busqueda);
+            $lista = array_values(array_filter(
+                $lista,
+                static function (array $row) use ($needle): bool {
+                    $nombre = mb_strtolower((string) ($row['nombre'] ?? ''));
+                    $area = mb_strtolower((string) ($row['area'] ?? ''));
+                    return str_contains($nombre, $needle) || str_contains($area, $needle);
+                }
+            ));
+        }
+
+        if ($orden !== 'score') {
+            usort($lista, static function (array $a, array $b) use ($orden): int {
+                $cmp = ($b[$orden] ?? 0) <=> ($a[$orden] ?? 0);
+                if ($cmp !== 0) {
+                    return $cmp;
+                }
+                return ((int) ($a['rank'] ?? 0)) <=> ((int) ($b['rank'] ?? 0));
+            });
+        }
+
+        return $lista;
     }
 }
