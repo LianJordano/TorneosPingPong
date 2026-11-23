@@ -100,11 +100,16 @@ $enLiga = $torneo['estado'] === EstadoTorneo::FASE_LIGA->value;
                     $pos = (int) $fila['posicion'];
                     $clasifica = $pos <= $clasificados;
                     $clases = trim(($clasifica ? 'row--clasifica' : '') . ($pos === $clasificados ? ' row--cutoff' : ''));
+                    $posMod = match ($pos) { 1 => ' standings__pos--gold', 2 => ' standings__pos--silver', 3 => ' standings__pos--bronze', default => '' };
+                    $difSets = (int) $fila['sf'] - (int) $fila['sc'];
+                    $difPts = (int) $fila['pf'] - (int) $fila['pc'];
+                    $fmtDiff = static fn (int $d): string => $d > 0 ? '+' . $d : (string) $d;
+                    $diffClass = static fn (int $d): string => $d > 0 ? 'standings__diff--pos' : ($d < 0 ? 'standings__diff--neg' : 'standings__diff--zero');
                     ?>
                     <tr<?= $clases !== '' ? ' class="' . e($clases) . '"' : '' ?>>
                         <td class="cell--primary">
                             <span class="standings__player">
-                                <span class="standings__pos"><span class="sr-only">Posición </span><?= e((string) $pos) ?></span>
+                                <span class="standings__pos<?= $posMod ?>"><span class="sr-only">Posición </span><?= e((string) $pos) ?></span>
                                 <span class="standings__name"><?= e($fila['nombre']) ?></span>
                                 <?php if ($clasifica): ?>
                                     <span class="badge badge--green standings__tag"><?= icon('check', 'icon--sm') ?> Clasifica</span>
@@ -112,12 +117,22 @@ $enLiga = $torneo['estado'] === EstadoTorneo::FASE_LIGA->value;
                             </span>
                         </td>
                         <td class="num" data-label="Jugados"><?= e((string) $fila['pj']) ?></td>
-                        <td class="num" data-label="Ganados"><?= e((string) $fila['pg']) ?></td>
-                        <td class="num" data-label="Perdidos"><?= e((string) $fila['pp']) ?></td>
+                        <td class="num standings__win" data-label="Ganados"><?= e((string) $fila['pg']) ?></td>
+                        <td class="num standings__loss" data-label="Perdidos"><?= e((string) $fila['pp']) ?></td>
                         <td class="num standings__pts" data-label="Puntos de clasificación"><strong><?= e((string) $fila['puntos']) ?></strong></td>
-                        <td class="num" data-label="Sets (favor-contra)"><?= e((string) $fila['sf']) ?>-<?= e((string) $fila['sc']) ?></td>
+                        <td class="num" data-label="Sets (favor-contra)">
+                            <span class="standings__metric">
+                                <span><?= e((string) $fila['sf']) ?>-<?= e((string) $fila['sc']) ?></span>
+                                <span class="standings__diff <?= $diffClass($difSets) ?>"><?= e($fmtDiff($difSets)) ?></span>
+                            </span>
+                        </td>
                         <td class="num" data-label="Ratio de sets"><?= e($fmtRatio($fila['set_ratio'])) ?></td>
-                        <td class="num" data-label="Puntos (favor-contra)"><?= e((string) $fila['pf']) ?>-<?= e((string) $fila['pc']) ?></td>
+                        <td class="num" data-label="Puntos (favor-contra)">
+                            <span class="standings__metric">
+                                <span><?= e((string) $fila['pf']) ?>-<?= e((string) $fila['pc']) ?></span>
+                                <span class="standings__diff <?= $diffClass($difPts) ?>"><?= e($fmtDiff($difPts)) ?></span>
+                            </span>
+                        </td>
                         <td class="num" data-label="Ratio de puntos"><?= e($fmtRatio($fila['punto_ratio'])) ?></td>
                         <td data-label="Desempate"><?php if (!empty($fila['desempate'])): ?><span class="badge badge--blue"><?= e($fila['desempate']) ?></span><?php endif; ?></td>
                     </tr>

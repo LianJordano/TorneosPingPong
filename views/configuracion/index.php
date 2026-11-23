@@ -25,7 +25,7 @@ $columnasCarga = [
     <h2 class="sr-only" id="config-general">Secciones</h2>
     <div class="grid-3">
         <a class="card card--interactive settings-card" href="/areas">
-            <span class="settings-card__icon"><?= icon('layers') ?></span>
+            <span class="settings-card__icon icon-tint--blue"><?= icon('layers') ?></span>
             <span class="settings-card__body">
                 <strong class="settings-card__title">Áreas</strong>
                 <small>Sectores, equipos o departamentos para agrupar jugadores.</small>
@@ -34,7 +34,7 @@ $columnasCarga = [
             <?= icon('chevron-right', 'settings-card__arrow') ?>
         </a>
         <a class="card card--interactive settings-card" href="/niveles">
-            <span class="settings-card__icon"><?= icon('target') ?></span>
+            <span class="settings-card__icon icon-tint--accent"><?= icon('target') ?></span>
             <span class="settings-card__body">
                 <strong class="settings-card__title">Niveles</strong>
                 <small>Escala para clasificar nivel competitivo o experiencia.</small>
@@ -43,7 +43,7 @@ $columnasCarga = [
             <?= icon('chevron-right', 'settings-card__arrow') ?>
         </a>
         <a class="card card--interactive settings-card" href="/configuracion/usuarios">
-            <span class="settings-card__icon"><?= icon('shield') ?></span>
+            <span class="settings-card__icon icon-tint--purple"><?= icon('shield') ?></span>
             <span class="settings-card__body">
                 <strong class="settings-card__title">Usuarios y roles</strong>
                 <small>Asigná Administrador, Anotador o Espectador a cada usuario.</small>

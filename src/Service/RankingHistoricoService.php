@@ -6,11 +6,11 @@ namespace PingPong\Service;
 
 use PingPong\Domain\PodioCalculator;
 use PingPong\Domain\TablaPosiciones;
-use PingPong\Repository\EstadisticaJugadorRepository;
+use PingPong\Repository\EstadisticaJugadorRepositoryInterface;
 
 final class RankingHistoricoService
 {
-    public function __construct(private EstadisticaJugadorRepository $repo)
+    public function __construct(private EstadisticaJugadorRepositoryInterface $repo)
     {
     }
 
@@ -123,22 +123,27 @@ final class RankingHistoricoService
                 continue;
             }
 
+            $origen = $this->origen($i);
             $inscId = (int) $i['id'];
             $torneoId = (int) $i['torneo_id'];
+            $inscKey = $this->clave($origen, $inscId);
+            $torneoKey = $this->clave($origen, $torneoId);
             $ids = array_values(array_filter([
                 (int) $i['persona_id'],
                 $i['persona_id_2'] !== null ? (int) $i['persona_id_2'] : null,
             ], static fn (?int $id): bool => $id !== null));
-            $inscripcionPersonas[$inscId] = $ids;
+            $inscripcionPersonas[$inscKey] = $ids;
 
             foreach ($ids as $personaId) {
                 if (!isset($stats[$personaId])) {
                     continue;
                 }
-                $stats[$personaId]['torneosIds'][$torneoId] = true;
+                $stats[$personaId]['torneosIds'][$torneoKey] = true;
                 $stats[$personaId]['modalidades'][$i['modalidad']] = ($stats[$personaId]['modalidades'][$i['modalidad']] ?? 0) + 1;
-                $historial[$personaId][$torneoId] = [
+                $historial[$personaId][$torneoKey] = [
+                    'origen' => $origen,
                     'torneo_id' => $torneoId,
+                    'url' => $this->urlTorneo($origen, $torneoId),
                     'nombre' => (string) $i['torneo_nombre'],
                     'modalidad' => (string) $i['modalidad'],
                     'fecha' => $this->fechaTorneo($i),
@@ -150,16 +155,18 @@ final class RankingHistoricoService
 
             if (count($ids) === 2) {
                 [$a, $b] = $ids;
-                $this->sumarCompanero($companeros, $a, $b, $personas[$b]['nombre_completo'] ?? 'Jugador #' . $b, $torneoId);
-                $this->sumarCompanero($companeros, $b, $a, $personas[$a]['nombre_completo'] ?? 'Jugador #' . $a, $torneoId);
+                $this->sumarCompanero($companeros, $a, $b, $personas[$b]['nombre_completo'] ?? 'Jugador #' . $b, $torneoKey);
+                $this->sumarCompanero($companeros, $b, $a, $personas[$a]['nombre_completo'] ?? 'Jugador #' . $a, $torneoKey);
             }
         }
 
         $podios = $this->calcularPodios($inscripcionPersonas, $filters);
-        foreach ($podios as $torneoId => $filas) {
+        foreach ($podios as $torneoKey => $filas) {
+            $origen = explode(':', $torneoKey, 2)[0];
             foreach ($filas as $fila) {
                 $pos = (int) $fila['posicion'];
-                foreach ($inscripcionPersonas[(int) $fila['insc_id']] ?? [] as $personaId) {
+                $inscKey = $this->clave($origen, (int) $fila['insc_id']);
+                foreach ($inscripcionPersonas[$inscKey] ?? [] as $personaId) {
                     if (!isset($stats[$personaId])) {
                         continue;
                     }
@@ -171,22 +178,35 @@ final class RankingHistoricoService
                         $stats[$personaId]['terceros_lugares']++;
                     }
                     $stats[$personaId]['mejor_finish'] = $stats[$personaId]['mejor_finish'] === null ? $pos : min($stats[$personaId]['mejor_finish'], $pos);
-                    if (isset($historial[$personaId][$torneoId])) {
-                        $historial[$personaId][$torneoId]['posicion'] = $pos;
+                    if (isset($historial[$personaId][$torneoKey])) {
+                        $historial[$personaId][$torneoKey]['posicion'] = $pos;
                     }
                 }
             }
         }
 
+        $partidos = $this->repo->partidosFinalizadosReales();
+        usort($partidos, function (array $a, array $b): int {
+            $faseOrden = static fn (array $m): int => (string) ($m['fase'] ?? '') === 'ELIMINATORIA' ? 1 : 0;
+            return strcmp($this->fechaTorneo($a), $this->fechaTorneo($b))
+                ?: strcmp($this->origen($a), $this->origen($b))
+                ?: ((int) $a['torneo_id'] <=> (int) $b['torneo_id'])
+                ?: ($faseOrden($a) <=> $faseOrden($b))
+                ?: ((int) ($a['ronda'] ?? 0) <=> (int) ($b['ronda'] ?? 0))
+                ?: ((int) ($a['orden_en_ronda'] ?? 0) <=> (int) ($b['orden_en_ronda'] ?? 0))
+                ?: ((int) $a['id'] <=> (int) $b['id']);
+        });
+
         $partidosVista = [];
         $secuencia = [];
-        foreach ($this->repo->partidosFinalizadosReales() as $m) {
+        foreach ($partidos as $m) {
             if (!$this->incluyeTorneo($m, $filters)) {
                 continue;
             }
 
-            $aIds = $inscripcionPersonas[(int) $m['inscripcion_a_id']] ?? [];
-            $bIds = $inscripcionPersonas[(int) $m['inscripcion_b_id']] ?? [];
+            $origen = $this->origen($m);
+            $aIds = $inscripcionPersonas[$this->clave($origen, (int) $m['inscripcion_a_id'])] ?? [];
+            $bIds = $inscripcionPersonas[$this->clave($origen, (int) $m['inscripcion_b_id'])] ?? [];
             if ($aIds === [] || $bIds === []) {
                 continue;
             }
@@ -199,6 +219,8 @@ final class RankingHistoricoService
             $puntosA = (int) $m['puntos_a'];
             $puntosB = (int) $m['puntos_b'];
             $fase = (string) $m['fase'];
+            $esFiesta = $origen === 'FIESTA';
+            $torneoId = (int) $m['torneo_id'];
 
             foreach ($aIds as $personaId) {
                 if (!isset($stats[$personaId])) {
@@ -217,15 +239,17 @@ final class RankingHistoricoService
 
             $partidosVista[] = [
                 'id' => (int) $m['id'],
-                'torneo_id' => (int) $m['torneo_id'],
+                'origen' => $origen,
+                'torneo_id' => $torneoId,
+                'url' => $this->urlTorneo($origen, $torneoId),
                 'torneo_nombre' => (string) $m['torneo_nombre'],
                 'fecha' => $this->fechaTorneo($m),
                 'orden_fecha' => $this->ordenFecha($m),
                 'fase' => $fase,
                 'a_label' => (string) $m['a_label'],
                 'b_label' => (string) $m['b_label'],
-                'score' => $setsA . '-' . $setsB,
-                'puntos' => $puntosA . '-' . $puntosB,
+                'score' => $esFiesta ? ($puntosA . '-' . $puntosB) : ($setsA . '-' . $setsB),
+                'puntos' => $esFiesta ? '' : ($puntosA . '-' . $puntosB),
                 'ganador_label' => $ganaA ? (string) $m['a_label'] : ($ganaB ? (string) $m['b_label'] : 'Sin ganador'),
                 'personas' => array_merge($aIds, $bIds),
             ];
@@ -352,14 +376,14 @@ final class RankingHistoricoService
     }
 
     /** @param array<int,list<array<string,mixed>>> $companeros */
-    private function sumarCompanero(array &$companeros, int $personaId, int $companeroId, string $nombre, int $torneoId): void
+    private function sumarCompanero(array &$companeros, int $personaId, int $companeroId, string $nombre, string $torneoKey): void
     {
         $companeros[$personaId][$companeroId] ??= ['persona_id' => $companeroId, 'nombre' => $nombre, 'torneosIds' => []];
-        $companeros[$personaId][$companeroId]['torneosIds'][$torneoId] = true;
+        $companeros[$personaId][$companeroId]['torneosIds'][$torneoKey] = true;
         $companeros[$personaId][$companeroId]['torneos'] = count($companeros[$personaId][$companeroId]['torneosIds']);
     }
 
-    /** @param array<int,list<int>> $inscripcionPersonas @param array<string,mixed> $filters @return array<int,list<array<string,mixed>>> */
+    /** @param array<string,list<int>> $inscripcionPersonas @param array<string,mixed> $filters @return array<string,list<array<string,mixed>>> */
     private function calcularPodios(array $inscripcionPersonas, array $filters = []): array
     {
         $podios = [];
@@ -368,24 +392,26 @@ final class RankingHistoricoService
                 continue;
             }
 
+            $origen = $this->origen($torneo);
             $torneoId = (int) $torneo['id'];
-            $bracket = $this->repo->bracketPodio($torneoId);
+            $torneoKey = $this->clave($origen, $torneoId);
+            $bracket = $this->repo->bracketPodio($torneoId, $origen);
             if ($bracket === []) {
                 continue;
             }
             $totalRondas = max(array_map(static fn (array $p): int => (int) $p['ronda'], $bracket));
             $tabla = TablaPosiciones::calcular(
-                $this->repo->jugadoresTorneo($torneoId),
-                $this->repo->ligaAgregada($torneoId),
-                (int) $torneo['puntos_por_victoria']
+                $this->repo->jugadoresTorneo($torneoId, $origen),
+                $this->repo->ligaAgregada($torneoId, $origen),
+                (int) ($torneo['puntos_por_victoria'] ?? 2)
             );
             $posicionLiga = [];
             foreach ($tabla as $fila) {
                 $posicionLiga[(int) $fila['insc_id']] = (int) $fila['posicion'];
             }
-            $podios[$torneoId] = array_values(array_filter(
+            $podios[$torneoKey] = array_values(array_filter(
                 PodioCalculator::calcular($bracket, $totalRondas, $posicionLiga),
-                static fn (array $fila): bool => isset($inscripcionPersonas[(int) $fila['insc_id']])
+                fn (array $fila): bool => isset($inscripcionPersonas[$this->clave($origen, (int) $fila['insc_id'])])
             ));
         }
         return $podios;
@@ -448,6 +474,22 @@ final class RankingHistoricoService
     /** @param array<string,mixed> $row */
     private function ordenFecha(array $row): string
     {
-        return $this->fechaTorneo($row) . ' ' . str_pad((string) ($row['torneo_id'] ?? $row['id'] ?? 0), 10, '0', STR_PAD_LEFT);
+        return $this->fechaTorneo($row) . ' ' . $this->origen($row) . ' ' . str_pad((string) ($row['torneo_id'] ?? $row['id'] ?? 0), 10, '0', STR_PAD_LEFT);
+    }
+
+    /** @param array<string,mixed> $row */
+    private function origen(array $row): string
+    {
+        return strtoupper((string) ($row['origen'] ?? 'TORNEO'));
+    }
+
+    private function clave(string $origen, int $id): string
+    {
+        return $origen . ':' . $id;
+    }
+
+    private function urlTorneo(string $origen, int $id): string
+    {
+        return $origen === 'FIESTA' ? '/fiesta/' . $id : '/torneos/' . $id;
     }
 }

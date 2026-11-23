@@ -34,7 +34,7 @@ $total = count($torneos);
         <a class="tabs__link" href="/torneos"<?= $incluirArchivados ? '' : ' aria-current="page"' ?>>Activos</a>
         <a class="tabs__link" href="/torneos?archivados=1"<?= $incluirArchivados ? ' aria-current="page"' : '' ?>><?= icon('archive') ?> Incluir archivados</a>
     </nav>
-    <p class="muted small torneos-count">
+    <p class="torneos-count">
         <?= e((string) $total) ?> <?= $total === 1 ? 'torneo' : 'torneos' ?><?= $incluirArchivados ? ', archivados incluidos' : '' ?>
     </p>
 </div>
@@ -51,7 +51,7 @@ $total = count($torneos);
 <?php else: ?>
     <section class="card card--flush">
         <div class="table-wrap">
-            <table class="table table--stack">
+            <table class="table table--stack torneos-table">
                 <caption class="sr-only">Listado de torneos</caption>
                 <thead>
                     <tr>
@@ -81,15 +81,15 @@ $total = count($torneos);
                             <?php endif; ?>
                         </td>
                         <td data-label="Modalidad">
-                            <span class="torneos-modalidad">
-                                <?= icon($esDobles ? 'users' : 'user') ?>
-                                <span>
+                            <div class="torneos-modalidad">
+                                <span class="badge <?= $esDobles ? 'badge--purple' : 'badge--cyan' ?>">
+                                    <?= icon($esDobles ? 'users' : 'user', 'icon--sm') ?>
                                     <?= $esDobles ? 'Dobles' : 'Individual' ?>
-                                    <?php if ($esDobles): ?>
-                                        <span class="table__sub"><?= Emparejamiento::from($t['emparejamiento'])->esAleatorio() ? 'Parejas por sorteo' : 'Parejas manuales' ?></span>
-                                    <?php endif; ?>
                                 </span>
-                            </span>
+                                <?php if ($esDobles): ?>
+                                    <span class="table__sub"><?= Emparejamiento::from($t['emparejamiento'])->esAleatorio() ? 'Parejas por sorteo' : 'Parejas manuales' ?></span>
+                                <?php endif; ?>
+                            </div>
                         </td>
                         <td data-label="Estado"><span class="badge badge--dot <?= e($estado->badge()) ?>"><?= e($estado->label()) ?></span></td>
                         <td data-label="Inscritos" class="num"><?= e((string) ($t['inscritos'] ?? 0)) ?></td>

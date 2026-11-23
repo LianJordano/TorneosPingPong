@@ -107,6 +107,12 @@ body.nav-abierto { overflow: hidden; }
 
 .brand:hover { color: var(--text); }
 
+.sidebar > .brand {
+    padding: var(--sp-2) var(--sp-2) var(--sp-4);
+    border-radius: 0;
+    border-bottom: 1px solid var(--border);
+}
+
 .brand__mark {
     position: relative;
     display: grid;
@@ -167,12 +173,13 @@ body.nav-abierto { overflow: hidden; }
     gap: var(--sp-3);
     min-height: 42px;
     padding: var(--sp-2) var(--sp-3);
+    border: 1px solid transparent;
     border-radius: var(--r);
     color: var(--text-2);
     font-size: var(--fs-sm);
     font-weight: 600;
     text-decoration: none;
-    transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+    transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
 .side-nav__link .icon { color: var(--muted); transition: color var(--dur) var(--ease); }
@@ -184,6 +191,8 @@ body.nav-abierto { overflow: hidden; }
 
 .side-nav__link[aria-current="page"] {
     background: var(--primary-soft);
+    border-color: var(--primary-soft-border);
+    box-shadow: inset 3px 0 0 var(--primary);
     color: var(--primary-text);
 }
 
@@ -201,8 +210,10 @@ body.nav-abierto { overflow: hidden; }
     display: flex;
     align-items: center;
     gap: var(--sp-3);
-    padding: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
     border-radius: var(--r);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
 }
 
 .avatar {
@@ -221,7 +232,7 @@ body.nav-abierto { overflow: hidden; }
 
 .avatar--lg { width: 56px; height: 56px; font-size: var(--fs-lg); }
 
-.user-card__text { display: grid; min-width: 0; line-height: 1.25; }
+.user-card__text { flex: 1; display: grid; min-width: 0; line-height: 1.25; }
 .user-card__name {
     font-size: var(--fs-sm);
     font-weight: 700;
@@ -292,6 +303,7 @@ body.nav-abierto { overflow: hidden; }
 }
 
 .tabbar__link {
+    position: relative;
     display: grid;
     place-items: center;
     align-content: center;
@@ -304,6 +316,17 @@ body.nav-abierto { overflow: hidden; }
 
 .tabbar__link .icon { width: 22px; height: 22px; }
 .tabbar__link[aria-current="page"] { color: var(--primary-text); }
+.tabbar__link[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    border-radius: 0 0 var(--r-pill) var(--r-pill);
+    background: var(--primary);
+}
 .tabbar__link:hover { color: var(--text); }
 
 body.has-tabbar .shell__main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }

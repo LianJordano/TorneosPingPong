@@ -120,10 +120,14 @@ $conBracket = $conLiga && $estado !== EstadoTorneo::FASE_LIGA->value;
                 </thead>
                 <tbody>
                 <?php foreach ($podio as $p): ?>
+                    <?php
+                    $pos = (int) $p['posicion'];
+                    $posMod = match ($pos) { 1 => ' standings__pos--gold', 2 => ' standings__pos--silver', 3 => ' standings__pos--bronze', default => '' };
+                    ?>
                     <tr<?= $p['premiado'] ? ' class="row--clasifica"' : '' ?>>
                         <td class="cell--primary">
                             <span class="standings__player">
-                                <span class="standings__pos"><span class="sr-only">Posición </span><?= e((string) $p['posicion']) ?></span>
+                                <span class="standings__pos<?= $posMod ?>"><span class="sr-only">Posición </span><?= e((string) $pos) ?></span>
                                 <span class="standings__name"><?= e($p['nombre']) ?></span>
                                 <?php if ($p['premiado']): ?><span class="badge badge--green standings__tag"><?= icon('gift', 'icon--sm') ?> Premiado</span><?php endif; ?>
                             </span>

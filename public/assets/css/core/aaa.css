@@ -1,0 +1,576 @@
+/* ==========================================================================
+   AAA Visual Craft Layer — Broadcast Sport x Modern SaaS Precision
+   Loaded after all page stylesheets and before utilities.css.
+   Zero breaking renames; pure token refinement, depth, lighting, and motion.
+   ========================================================================== */
+
+:root {
+    --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-display: "Space Grotesk", "Plus Jakarta Sans", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --aaa-specular: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    --aaa-card-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 6px 20px -8px rgba(15, 23, 42, 0.08);
+    --aaa-card-shadow-hover:
+        0 2px 6px rgba(15, 23, 42, 0.06),
+        0 18px 36px -14px rgba(15, 23, 42, 0.16);
+    --aaa-glow-primary: 0 10px 26px -10px rgba(37, 99, 235, 0.55);
+    --aaa-spotlight: rgba(37, 99, 235, 0.10);
+    --aaa-glass: rgba(255, 255, 255, 0.82);
+}
+
+:root[data-theme="dark"] {
+    --bg: #060a14;
+    --surface: #0c1322;
+    --surface-2: #111a2e;
+    --surface-3: #18243d;
+    --border: rgba(148, 163, 184, 0.14);
+    --border-strong: rgba(148, 163, 184, 0.26);
+
+    --aaa-specular: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --aaa-card-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.35),
+        0 10px 28px -10px rgba(0, 0, 0, 0.55);
+    --aaa-card-shadow-hover:
+        0 4px 12px rgba(0, 0, 0, 0.45),
+        0 22px 44px -14px rgba(0, 0, 0, 0.72);
+    --aaa-glow-primary: 0 12px 30px -10px rgba(59, 130, 246, 0.62);
+    --aaa-spotlight: rgba(96, 165, 250, 0.14);
+    --aaa-glass: rgba(12, 19, 34, 0.82);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #060a14;
+        --surface: #0c1322;
+        --surface-2: #111a2e;
+        --surface-3: #18243d;
+        --border: rgba(148, 163, 184, 0.14);
+        --border-strong: rgba(148, 163, 184, 0.26);
+
+        --aaa-specular: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+        --aaa-card-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.35),
+            0 10px 28px -10px rgba(0, 0, 0, 0.55);
+        --aaa-card-shadow-hover:
+            0 4px 12px rgba(0, 0, 0, 0.45),
+            0 22px 44px -14px rgba(0, 0, 0, 0.72);
+        --aaa-glow-primary: 0 12px 30px -10px rgba(59, 130, 246, 0.62);
+        --aaa-spotlight: rgba(96, 165, 250, 0.14);
+        --aaa-glass: rgba(12, 19, 34, 0.82);
+    }
+}
+
+/* ---------- Global polish: selection, scrollbars, ambient canvas ---------- */
+::selection {
+    background: color-mix(in srgb, var(--primary) 26%, transparent);
+    color: var(--text);
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--muted); border: 2px solid transparent; background-clip: padding-box; }
+
+body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image:
+        radial-gradient(900px 420px at 80% -80px, color-mix(in srgb, var(--primary) 7%, transparent), transparent 65%),
+        radial-gradient(700px 380px at 12% 10%, color-mix(in srgb, var(--accent) 4%, transparent), transparent 60%);
+    background-attachment: fixed;
+}
+
+/* Scoreboard mono precision for numbers */
+.score-chip,
+.fiesta-match__score,
+.bm-sets,
+.rk-score-pill,
+.rk-diff,
+.fiesta-diff,
+.standings__pts strong,
+.standings__diff {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+
+/* ---------- Frosted Glass Shell (Sidebar, Topbar, Tabbar) ---------- */
+.sidebar {
+    background: var(--aaa-glass);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+.topbar,
+.tabbar {
+    background: var(--aaa-glass);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.brand__mark {
+    background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--accent) 70%, var(--primary)));
+    box-shadow: 0 6px 16px -6px rgba(37, 99, 235, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.brand:hover .brand__mark { transform: rotate(-8deg) scale(1.06); }
+
+/* Sidebar Ctrl+K trigger */
+.cmd-trigger {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    margin-bottom: var(--sp-3);
+    padding: 8px 10px;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--aaa-specular);
+    transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+.cmd-trigger:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+    background: var(--surface);
+}
+.cmd-trigger:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.cmd-trigger span { flex: 1; text-align: left; }
+.cmd-trigger kbd {
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.side-nav__link {
+    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease, border-color 150ms ease;
+}
+.side-nav__link:hover { transform: translateX(2px); }
+
+/* ---------- Broadcast Court-Grid Heroes ---------- */
+.hero,
+.page-head--hero,
+.auth__brand {
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 20px 44px -22px rgba(2, 6, 23, 0.65),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* Subtle ping-pong court grid pattern inside heroes */
+.hero::before,
+.page-head--hero::before,
+.auth__brand::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 85% 85% at 75% 30%, #000 15%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 85% 85% at 75% 30%, #000 15%, transparent 78%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.hero > *,
+.page-head--hero > *,
+.auth__brand > * {
+    position: relative;
+    z-index: 1;
+}
+
+.hero h1,
+.page-head--hero h1 {
+    letter-spacing: -0.025em;
+}
+
+/* ---------- Cards, Specular Edges & Cursor Spotlight ---------- */
+.card,
+.stat,
+.fiesta-group,
+.rk-podium__card,
+.podio__card {
+    box-shadow: var(--aaa-card-shadow), var(--aaa-specular);
+}
+
+.card--interactive,
+.rk-podium__card,
+.podio__card,
+.quick-link,
+.fiesta-card,
+a.stat {
+    position: relative;
+    overflow: hidden;
+    transition:
+        transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 180ms ease;
+}
+
+.card--interactive::after,
+.rk-podium__card::after,
+.podio__card::after,
+.quick-link::after,
+.fiesta-card::after,
+a.stat::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        340px circle at var(--mx, 50%) var(--my, 50%),
+        var(--aaa-spotlight),
+        transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 220ms ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.card--interactive:hover::after,
+.rk-podium__card:hover::after,
+.podio__card:hover::after,
+.quick-link:hover::after,
+.fiesta-card:hover::after,
+a.stat:hover::after {
+    opacity: 1;
+}
+
+.card--interactive:hover,
+.quick-link:hover,
+.fiesta-card:hover,
+a.stat:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--aaa-card-shadow-hover), var(--aaa-specular);
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border-strong));
+}
+
+.quick-link .quick-link__arrow,
+.quick-link .icon--arrow {
+    transition: transform 180ms ease;
+}
+.quick-link:hover .quick-link__arrow,
+.quick-link:hover .icon--arrow {
+    transform: translateX(3px);
+}
+
+/* ---------- Metallic Podium Craft ---------- */
+.rk-podium__card--gold:hover,
+.podio__card--1:hover {
+    border-color: var(--gold);
+    box-shadow:
+        0 20px 42px -18px color-mix(in srgb, var(--gold) 60%, transparent),
+        var(--aaa-specular);
+}
+.rk-podium__card--gold::before,
+.podio__card--1::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), color-mix(in srgb, var(--accent) 80%, var(--gold)), transparent);
+    pointer-events: none;
+}
+
+/* ---------- Tactile Buttons & Inputs ---------- */
+.btn {
+    transition:
+        transform 120ms cubic-bezier(0.22, 1, 0.36, 1),
+        background-color 150ms ease,
+        border-color 150ms ease,
+        box-shadow 180ms ease,
+        color 150ms ease;
+}
+.btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn--primary {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 90%, #fff), var(--primary));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        0 2px 6px -2px rgba(37, 99, 235, 0.45);
+}
+.btn--primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        var(--aaa-glow-primary);
+}
+
+.table tbody tr {
+    transition: background-color 130ms ease;
+}
+
+/* ---------- Floating Toast Flashes ---------- */
+.flash-stack {
+    position: fixed;
+    top: calc(var(--sp-4));
+    right: calc(var(--sp-4));
+    z-index: 900;
+    display: grid;
+    gap: var(--sp-2);
+    width: min(420px, calc(100vw - 2rem));
+    pointer-events: none;
+}
+.flash-stack .flash {
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    pointer-events: auto;
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    box-shadow: 0 18px 40px -14px rgba(2, 6, 23, 0.32), var(--aaa-specular);
+    animation: aaa-toast-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.flash-stack .flash.is-leaving {
+    animation: aaa-toast-out 220ms ease forwards;
+}
+.flash-stack .flash[data-autodismiss]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    background: currentColor;
+    opacity: 0.32;
+    transform-origin: left center;
+    animation: aaa-toast-timer var(--toast-ms, 4800ms) linear forwards;
+}
+.flash-stack .flash:hover::after { animation-play-state: paused; }
+
+@media (max-width: 719px) {
+    .flash-stack {
+        top: auto;
+        bottom: calc(var(--tabbar-h, 64px) + var(--sp-3));
+        left: var(--sp-3);
+        right: var(--sp-3);
+        width: auto;
+    }
+}
+
+@keyframes aaa-toast-in {
+    from { opacity: 0; transform: translateY(-12px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes aaa-toast-out {
+    to   { opacity: 0; transform: translateY(-8px) scale(0.96); }
+}
+@keyframes aaa-toast-timer {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+/* ---------- Command Palette (Ctrl+K) ---------- */
+.cmd-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: start center;
+    padding: min(14vh, 110px) var(--sp-4) var(--sp-4);
+    background: rgba(2, 6, 23, 0.56);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: aaa-fade 150ms ease;
+}
+.cmd-backdrop[hidden] { display: none; }
+
+.cmd-dialog {
+    width: min(560px, 100%);
+    border-radius: var(--r-xl);
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    box-shadow: 0 32px 72px -20px rgba(2, 6, 23, 0.55), var(--aaa-specular);
+    overflow: hidden;
+    animation: aaa-cmd-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cmd-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--border);
+}
+.cmd-head .icon { color: var(--muted); flex: none; }
+.cmd-input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-md);
+    font-weight: 500;
+    outline: none;
+}
+.cmd-input::placeholder { color: var(--muted); }
+.cmd-esc {
+    padding: 3px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.cmd-list {
+    list-style: none;
+    margin: 0;
+    padding: var(--sp-2);
+    max-height: min(54vh, 380px);
+    overflow-y: auto;
+    display: grid;
+    gap: 2px;
+}
+.cmd-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: 10px var(--sp-3);
+    border: 0;
+    border-radius: var(--r);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 110ms ease, color 110ms ease;
+}
+.cmd-item:hover,
+.cmd-item.is-active {
+    background: var(--primary-soft);
+    color: var(--primary-text);
+    text-decoration: none;
+}
+.cmd-item__icon {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    color: var(--muted);
+    flex: none;
+}
+.cmd-item:hover .cmd-item__icon,
+.cmd-item.is-active .cmd-item__icon {
+    background: var(--primary);
+    color: var(--on-primary);
+}
+.cmd-item__text { flex: 1; min-width: 0; display: grid; }
+.cmd-item__sub { font-size: var(--fs-xs); font-weight: 500; color: var(--muted); }
+.cmd-item__tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.cmd-empty {
+    padding: var(--sp-6);
+    text-align: center;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+}
+
+.cmd-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: 8px var(--sp-4);
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+.cmd-foot kbd {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+}
+
+@keyframes aaa-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes aaa-cmd-in {
+    from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- Staggered Entrance Choreography ---------- */
+.page > .hero,
+.page > .page-head,
+.page > .rk-podium,
+.page > .stats,
+.page > .card,
+.page > .section,
+.page > .grid-2,
+.page > .grid-3,
+.page > .grid-4 {
+    animation: aaa-rise 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.page > :nth-child(2) { animation-delay: 40ms; }
+.page > :nth-child(3) { animation-delay: 80ms; }
+.page > :nth-child(4) { animation-delay: 120ms; }
+.page > :nth-child(5) { animation-delay: 160ms; }
+
+@keyframes aaa-rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Respect Reduced Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .page > *,
+    .flash-stack .flash,
+    .cmd-backdrop,
+    .cmd-dialog {
+        animation: none !important;
+    }
+    .card--interactive:hover,
+    .quick-link:hover,
+    .fiesta-card:hover,
+    a.stat:hover,
+    .rk-podium__card:hover,
+    .btn--primary:hover {
+        transform: none !important;
+    }
+}

@@ -1,18 +1,39 @@
 /* Tournament management: list, form, hub, prizes, audit — see docs/frontend.md */
 
 /* ---------- List (torneos/index) ---------- */
-.torneos-toolbar { justify-content: space-between; }
+.torneos-toolbar { justify-content: space-between; align-items: center; }
 .torneos-toolbar .tabs { margin: 0; }
-.torneos-count { margin: 0; }
+.torneos-count {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--r-pill);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
 
 .torneos-modalidad {
     display: inline-flex;
+    flex-direction: column;
     align-items: flex-start;
-    gap: var(--sp-2);
+    gap: 3px;
     text-align: left;
 }
 
-.torneos-modalidad > .icon { margin-top: 3px; color: var(--muted); }
+.torneos-table tbody tr:hover {
+    background: color-mix(in srgb, var(--primary-soft) 45%, var(--surface-2));
+}
+
+.torneos-table tbody tr:hover .actions-cell .btn--ghost {
+    color: var(--primary-text);
+    background: var(--surface);
+    border-color: var(--primary-soft-border);
+}
 
 /* ---------- Form (torneos/form) ---------- */
 .torneo-form { padding-bottom: 0; }
@@ -54,7 +75,66 @@
 }
 
 .torneo-insc__meta { margin: var(--sp-1) 0 0; }
+.torneo-insc__progress-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-5);
+}
 .torneo-insc__progress { margin-bottom: var(--sp-5); }
+.torneo-insc__progress-row .torneo-insc__progress { flex: 1; margin-bottom: 0; }
+.torneo-insc__pct {
+    flex: none;
+    padding: 2px 8px;
+    border-radius: var(--r-pill);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.torneo-insc__pct.is-complete {
+    background: var(--success-soft);
+    border-color: var(--success-border);
+    color: var(--success-text);
+}
+
+.torneo-specs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+}
+.torneo-spec {
+    display: grid;
+    gap: 2px;
+    padding: var(--sp-3);
+    border-radius: var(--r);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+}
+.torneo-spec__label {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.torneo-spec__val {
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+.torneo-spec__sub {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+}
+
 .torneo-insc__panel .field { margin-bottom: 0; }
 .torneo-insc__actions { margin-top: var(--sp-4); }
 

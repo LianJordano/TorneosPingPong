@@ -11,56 +11,76 @@ $hora = (int) date('G');
 $saludo = $hora < 12 ? 'Buenos días' : ($hora < 20 ? 'Buenas tardes' : 'Buenas noches');
 ?>
 <section class="hero dashboard-hero">
-    <span class="eyebrow">Panel</span>
-    <h1><?= e($saludo) ?><?= $nombreUsuario !== '' ? ', ' . e($nombreUsuario) : '' ?></h1>
-    <p>
-        <?php if ($torneosActivos > 0): ?>
-            Hay <?= e((string) $torneosActivos) ?> <?= $torneosActivos === 1 ? 'torneo en marcha' : 'torneos en marcha' ?>. Entrá para cargar resultados o revisar la tabla.
-        <?php else: ?>
-            No hay torneos en marcha en este momento.
-        <?php endif; ?>
-    </p>
-    <div class="actions mt-4">
-        <?php if ($puedeGestionar): ?>
-            <a class="btn btn--primary" href="/torneos/nuevo"><?= icon('plus') ?> Nuevo torneo</a>
-        <?php endif; ?>
-        <a class="btn" href="/torneos"><?= icon('trophy') ?> Ver torneos</a>
+    <div class="hero-grid">
+        <div>
+            <span class="eyebrow">Panel</span>
+            <h1><?= e($saludo) ?><?= $nombreUsuario !== '' ? ', ' . e($nombreUsuario) : '' ?></h1>
+            <p>
+                <?php if ($torneosActivos > 0): ?>
+                    Hay <?= e((string) $torneosActivos) ?> <?= $torneosActivos === 1 ? 'torneo en marcha' : 'torneos en marcha' ?>. Entrá para cargar resultados o revisar la tabla.
+                <?php else: ?>
+                    No hay torneos en marcha en este momento.
+                <?php endif; ?>
+            </p>
+            <div class="actions mt-4">
+                <?php if ($puedeGestionar): ?>
+                    <a class="btn btn--primary" href="/torneos/nuevo"><?= icon('plus') ?> Nuevo torneo</a>
+                <?php endif; ?>
+                <a class="btn" href="/torneos"><?= icon('trophy') ?> Ver torneos</a>
+            </div>
+        </div>
+        <div class="hero-side">
+            <div class="hero-card">
+                <span class="hero-card__label">Modo express</span>
+                <strong>Torneo Fiesta</strong>
+                <p>Armá partidos rápidos con ruleta de parejas y pantalla de show en vivo.</p>
+                <a class="btn btn--sm" href="/fiesta"><?= icon('shuffle', 'icon--sm') ?> Abrir Torneo Fiesta</a>
+            </div>
+        </div>
     </div>
 </section>
 
 <div class="stats">
-    <div class="stat">
-        <span class="stat__label"><?= icon('activity') ?> En marcha</span>
+    <a class="stat" href="/torneos">
+        <span class="stat__label"><span class="stat__icon stat__icon--green"><?= icon('activity') ?></span> En marcha</span>
         <span class="stat__num"><?= e((string) $torneosActivos) ?></span>
         <span class="stat__hint">Torneos sin finalizar ni cancelar</span>
-    </div>
-    <div class="stat">
-        <span class="stat__label"><?= icon('trophy') ?> Torneos</span>
+    </a>
+    <a class="stat" href="/torneos">
+        <span class="stat__label"><span class="stat__icon stat__icon--blue"><?= icon('trophy') ?></span> Torneos</span>
         <span class="stat__num"><?= e((string) $totalTorneos) ?></span>
         <span class="stat__hint">Total registrado</span>
-    </div>
-    <div class="stat">
-        <span class="stat__label"><?= icon('users') ?> Jugadores</span>
+    </a>
+    <a class="stat" href="/personas">
+        <span class="stat__label"><span class="stat__icon stat__icon--purple"><?= icon('users') ?></span> Jugadores</span>
         <span class="stat__num"><?= e((string) $totalPersonas) ?></span>
         <span class="stat__hint">Disponibles para inscribir</span>
-    </div>
+    </a>
 </div>
 
 <section class="section" aria-labelledby="accesos-titulo">
     <div class="section-head">
         <h2 id="accesos-titulo">Accesos rápidos</h2>
     </div>
-    <div class="grid-3">
+    <div class="grid-4">
         <a class="card card--interactive quick-link" href="/torneos">
-            <span class="quick-link__icon"><?= icon('trophy') ?></span>
+            <span class="quick-link__icon icon-tint--blue"><?= icon('trophy') ?></span>
             <span class="quick-link__body">
                 <strong>Torneos</strong>
                 <small>Partidos, tabla de posiciones y bracket de cada torneo.</small>
             </span>
             <?= icon('chevron-right', 'quick-link__arrow') ?>
         </a>
+        <a class="card card--interactive quick-link" href="/fiesta">
+            <span class="quick-link__icon icon-tint--accent"><?= icon('shuffle') ?></span>
+            <span class="quick-link__body">
+                <strong>Torneo Fiesta</strong>
+                <small>Ruleta de parejas y partidos rápidos para jugar al instante.</small>
+            </span>
+            <?= icon('chevron-right', 'quick-link__arrow') ?>
+        </a>
         <a class="card card--interactive quick-link" href="/personas">
-            <span class="quick-link__icon"><?= icon('users') ?></span>
+            <span class="quick-link__icon icon-tint--purple"><?= icon('users') ?></span>
             <span class="quick-link__body">
                 <strong>Jugadores</strong>
                 <small><?= $puedeGestionar ? 'Alta y edición de jugadores antes de inscribirlos.' : 'Listado y perfil de cada jugador.' ?></small>
@@ -68,7 +88,7 @@ $saludo = $hora < 12 ? 'Buenos días' : ($hora < 20 ? 'Buenas tardes' : 'Buenas 
             <?= icon('chevron-right', 'quick-link__arrow') ?>
         </a>
         <a class="card card--interactive quick-link" href="/ranking">
-            <span class="quick-link__icon"><?= icon('ranking') ?></span>
+            <span class="quick-link__icon icon-tint--gold"><?= icon('ranking') ?></span>
             <span class="quick-link__body">
                 <strong>Ranking</strong>
                 <small>Clasificación histórica acumulada entre torneos.</small>

@@ -6,6 +6,7 @@ use PingPong\Domain\Rol;
 /** @var list<Rol> $roles */
 /** @var int $usuarioActualId */
 $rolIconos = ['ADMIN' => 'shield', 'ANOTADOR' => 'scoreboard', 'ESPECTADOR' => 'eye'];
+$rolTints = ['ADMIN' => 'icon-tint--purple', 'ANOTADOR' => 'icon-tint--amber', 'ESPECTADOR' => 'icon-tint--cyan'];
 ?>
 <nav aria-label="Ruta"><ol class="breadcrumbs">
     <li><a href="/configuracion">Configuración</a></li>
@@ -100,7 +101,7 @@ $rolIconos = ['ADMIN' => 'shield', 'ANOTADOR' => 'scoreboard', 'ESPECTADOR' => '
         <?php foreach ($roles as $opcion): ?>
             <article class="card role-card">
                 <div class="role-card__head">
-                    <span class="role-card__icon"><?= icon($rolIconos[$opcion->value] ?? 'user') ?></span>
+                    <span class="role-card__icon <?= e($rolTints[$opcion->value] ?? 'icon-tint--blue') ?>"><?= icon($rolIconos[$opcion->value] ?? 'user') ?></span>
                     <h3 class="card__title"><?= e($opcion->label()) ?></h3>
                 </div>
                 <p class="muted small"><?= e($opcion->descripcion()) ?></p>

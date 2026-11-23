@@ -17,6 +17,25 @@ $medalla = static fn (?int $pos): string => match ($pos) {
     3 => 'bronze',
     default => '',
 };
+$rateTier = static fn (float $rate): string => $rate >= 65.0 ? 'high' : ($rate >= 45.0 ? 'mid' : 'low');
+$diffClass = static fn (int $v): string => $v > 0 ? 'rk-diff--pos' : ($v < 0 ? 'rk-diff--neg' : 'rk-diff--zero');
+
+$winRate = (float) $stats['win_rate'];
+$difPuntos = (int) $stats['diferencial_puntos'];
+$difSets = (int) $stats['diferencial_sets'];
+
+$indPj = (int) $stats['individual']['partidos'];
+$indPg = (int) $stats['individual']['ganados'];
+$indRate = $indPj > 0 ? round($indPg * 100 / $indPj, 1) : 0.0;
+
+$dobPj = (int) $stats['dobles']['partidos'];
+$dobPg = (int) $stats['dobles']['ganados'];
+$dobRate = $dobPj > 0 ? round($dobPg * 100 / $dobPj, 1) : 0.0;
+
+$equipoPorTorneo = [];
+foreach ($torneos as $t) {
+    $equipoPorTorneo[(string) ($t['origen'] ?? 'TORNEO') . ':' . (int) $t['torneo_id']] = (string) $t['equipo'];
+}
 ?>
 <nav aria-label="Ruta">
     <ol class="breadcrumbs">
@@ -72,12 +91,17 @@ $medalla = static fn (?int $pos): string => match ($pos) {
     </article>
     <article class="stat stat--compact">
         <span class="stat__label"><?= icon('target') ?> Efectividad</span>
-        <strong class="stat__num num"><?= e($fmtPct((float) $stats['win_rate'])) ?></strong>
+        <strong class="stat__num num"><?= e($fmtPct($winRate)) ?></strong>
+        <span class="rk-rate__bar rk-rate__bar--<?= $rateTier($winRate) ?> profile-stat__bar" aria-hidden="true">
+            <span style="width: <?= e((string) min(100, max(0, (int) round($winRate)))) ?>%"></span>
+        </span>
         <span class="stat__hint">Racha actual <?= e((string) $stats['racha_actual']) ?> · mejor <?= e((string) $stats['mejor_racha']) ?></span>
     </article>
     <article class="stat stat--compact">
         <span class="stat__label"><?= icon('activity') ?> Diferencia de puntos</span>
-        <strong class="stat__num num"><?= e($fmtDiff((int) $stats['diferencial_puntos'])) ?></strong>
+        <strong class="stat__num num">
+            <span class="rk-diff rk-diff--stat <?= $diffClass($difPuntos) ?>"><?= e($fmtDiff($difPuntos)) ?></span>
+        </strong>
         <span class="stat__hint"><?= e((string) $stats['puntos_favor']) ?> a favor · <?= e((string) $stats['puntos_contra']) ?> en contra</span>
     </article>
 </section>
@@ -90,13 +114,24 @@ $medalla = static fn (?int $pos): string => match ($pos) {
                 <h2>Resumen competitivo</h2>
             </div>
         </div>
+        <div class="profile-podium-strip" aria-label="Podios obtenidos">
+            <div class="profile-podium-tile profile-podium-tile--gold<?= (int) $stats['campeonatos'] === 0 ? ' is-empty' : '' ?>">
+                <?= icon('trophy') ?>
+                <strong class="num"><?= e((string) $stats['campeonatos']) ?></strong>
+                <span>Campeonatos</span>
+            </div>
+            <div class="profile-podium-tile profile-podium-tile--silver<?= (int) $stats['segundos_lugares'] === 0 ? ' is-empty' : '' ?>">
+                <?= icon('medal') ?>
+                <strong class="num"><?= e((string) $stats['segundos_lugares']) ?></strong>
+                <span>2.° lugares</span>
+            </div>
+            <div class="profile-podium-tile profile-podium-tile--bronze<?= (int) $stats['terceros_lugares'] === 0 ? ' is-empty' : '' ?>">
+                <?= icon('medal') ?>
+                <strong class="num"><?= e((string) $stats['terceros_lugares']) ?></strong>
+                <span>3.° lugares</span>
+            </div>
+        </div>
         <dl class="datalist profile-metrics">
-            <dt><?= icon('medal', 'medal-icon medal-icon--gold') ?> Campeonatos</dt>
-            <dd class="num"><?= e((string) $stats['campeonatos']) ?></dd>
-            <dt><?= icon('medal', 'medal-icon medal-icon--silver') ?> Segundos lugares</dt>
-            <dd class="num"><?= e((string) $stats['segundos_lugares']) ?></dd>
-            <dt><?= icon('medal', 'medal-icon medal-icon--bronze') ?> Terceros lugares</dt>
-            <dd class="num"><?= e((string) $stats['terceros_lugares']) ?></dd>
             <dt>Mejor posición</dt>
             <dd class="num"><?= e($bestFinish) ?></dd>
             <dt>Victorias en liga</dt>
@@ -106,7 +141,7 @@ $medalla = static fn (?int $pos): string => match ($pos) {
             <dt>Sets (ganados–perdidos)</dt>
             <dd class="num"><?= e((string) $stats['sets_ganados']) ?>–<?= e((string) $stats['sets_perdidos']) ?></dd>
             <dt>Diferencia de sets</dt>
-            <dd class="num"><?= e($fmtDiff((int) $stats['diferencial_sets'])) ?></dd>
+            <dd class="num"><span class="rk-diff <?= $diffClass($difSets) ?>"><?= e($fmtDiff($difSets)) ?></span></dd>
         </dl>
     </section>
 
@@ -119,14 +154,26 @@ $medalla = static fn (?int $pos): string => match ($pos) {
         </div>
         <div class="split-cards">
             <div class="split-card">
-                <span class="split-card__label"><?= icon('user') ?> Individual</span>
-                <strong class="num"><?= e((string) $stats['individual']['partidos']) ?> <abbr title="partidos jugados">PJ</abbr></strong>
-                <small><?= e((string) $stats['individual']['ganados']) ?> victoria<?= (int) $stats['individual']['ganados'] === 1 ? '' : 's' ?></small>
+                <div class="split-card__head">
+                    <span class="split-card__label"><?= icon('user') ?> Individual</span>
+                    <span class="split-card__rate num"><?= e($fmtPct($indRate)) ?></span>
+                </div>
+                <strong class="num"><?= e((string) $indPj) ?> <abbr title="partidos jugados">PJ</abbr></strong>
+                <small><?= e((string) $indPg) ?> victoria<?= $indPg === 1 ? '' : 's' ?></small>
+                <span class="rk-rate__bar rk-rate__bar--<?= $rateTier($indRate) ?> split-card__bar" aria-hidden="true">
+                    <span style="width: <?= e((string) min(100, max(0, (int) round($indRate)))) ?>%"></span>
+                </span>
             </div>
             <div class="split-card split-card--doubles">
-                <span class="split-card__label"><?= icon('users') ?> Dobles</span>
-                <strong class="num"><?= e((string) $stats['dobles']['partidos']) ?> <abbr title="partidos jugados">PJ</abbr></strong>
-                <small><?= e((string) $stats['dobles']['ganados']) ?> victoria<?= (int) $stats['dobles']['ganados'] === 1 ? '' : 's' ?></small>
+                <div class="split-card__head">
+                    <span class="split-card__label"><?= icon('users') ?> Dobles</span>
+                    <span class="split-card__rate num"><?= e($fmtPct($dobRate)) ?></span>
+                </div>
+                <strong class="num"><?= e((string) $dobPj) ?> <abbr title="partidos jugados">PJ</abbr></strong>
+                <small><?= e((string) $dobPg) ?> victoria<?= $dobPg === 1 ? '' : 's' ?></small>
+                <span class="rk-rate__bar rk-rate__bar--<?= $rateTier($dobRate) ?> split-card__bar" aria-hidden="true">
+                    <span style="width: <?= e((string) min(100, max(0, (int) round($dobRate)))) ?>%"></span>
+                </span>
             </div>
         </div>
 
@@ -135,7 +182,7 @@ $medalla = static fn (?int $pos): string => match ($pos) {
             <ul class="list">
                 <?php foreach ($companeros as $c): ?>
                     <li class="list__item">
-                        <span class="avatar" aria-hidden="true"><?= e(initials($c['nombre'])) ?></span>
+                        <span class="avatar avatar--t<?= ((int) $c['persona_id']) % 5 ?>" aria-hidden="true"><?= e(initials($c['nombre'])) ?></span>
                         <div class="list__body">
                             <a class="list__title link" href="/personas/<?= e((string) $c['persona_id']) ?>"><?= e($c['nombre']) ?></a>
                             <span class="list__meta"><?= e((string) $c['torneos']) ?> torneo<?= (int) $c['torneos'] === 1 ? '' : 's' ?> juntos</span>
@@ -179,7 +226,12 @@ $medalla = static fn (?int $pos): string => match ($pos) {
                 <?php foreach ($torneos as $t): ?>
                     <?php $pos = $t['posicion'] === null ? null : (int) $t['posicion']; ?>
                     <tr>
-                        <td class="cell--primary"><a href="/torneos/<?= e((string) $t['torneo_id']) ?>"><?= e($t['nombre']) ?></a></td>
+                        <td class="cell--primary">
+                            <a href="<?= e((string) ($t['url'] ?? ('/torneos/' . $t['torneo_id']))) ?>"><?= e($t['nombre']) ?></a>
+                            <?php if (($t['origen'] ?? 'TORNEO') === 'FIESTA'): ?>
+                                <span class="badge badge--amber">Fiesta</span>
+                            <?php endif; ?>
+                        </td>
                         <td data-label="Fecha" class="nowrap"><?= e($t['fecha']) ?></td>
                         <td data-label="Modalidad"><span class="badge <?= $t['modalidad'] === 'DOBLES' ? 'badge--purple' : 'badge--blue' ?>"><?= icon($t['modalidad'] === 'DOBLES' ? 'users' : 'user') ?> <?= $t['modalidad'] === 'DOBLES' ? 'Dobles' : 'Individual' ?></span></td>
                         <td data-label="Equipo"><?= e($t['equipo']) ?></td>
@@ -220,6 +272,7 @@ $medalla = static fn (?int $pos): string => match ($pos) {
                 <thead>
                     <tr>
                         <th scope="col">Torneo</th>
+                        <th scope="col">Resultado</th>
                         <th scope="col">Fase</th>
                         <th scope="col">Cruce</th>
                         <th scope="col" class="text-right">Sets</th>
@@ -229,16 +282,38 @@ $medalla = static fn (?int $pos): string => match ($pos) {
                 </thead>
                 <tbody>
                 <?php foreach ($partidos as $m): ?>
+                    <?php
+                    $ganadorLabel = (string) $m['ganador_label'];
+                    $miEquipo = $equipoPorTorneo[(string) ($m['origen'] ?? 'TORNEO') . ':' . (int) $m['torneo_id']] ?? null;
+                    $sinGanador = $ganadorLabel === 'Sin ganador' || $ganadorLabel === '';
+                    $esVictoria = !$sinGanador && (
+                        $miEquipo !== null
+                            ? $ganadorLabel === $miEquipo
+                            : str_contains($ganadorLabel, (string) $persona['nombre_completo'])
+                    );
+                    ?>
                     <tr>
                         <td class="cell--primary">
-                            <a href="/torneos/<?= e((string) $m['torneo_id']) ?>"><?= e($m['torneo_nombre']) ?></a>
+                            <a href="<?= e((string) ($m['url'] ?? ('/torneos/' . $m['torneo_id']))) ?>"><?= e($m['torneo_nombre']) ?></a>
+                            <?php if (($m['origen'] ?? 'TORNEO') === 'FIESTA'): ?>
+                                <span class="badge badge--amber">Fiesta</span>
+                            <?php endif; ?>
                             <span class="table__sub"><?= e($m['fecha']) ?></span>
+                        </td>
+                        <td data-label="Resultado">
+                            <?php if ($sinGanador): ?>
+                                <span class="badge badge--gray">Sin resultado</span>
+                            <?php elseif ($esVictoria): ?>
+                                <span class="badge badge--green"><?= icon('check') ?> Victoria</span>
+                            <?php else: ?>
+                                <span class="badge badge--red">Derrota</span>
+                            <?php endif; ?>
                         </td>
                         <td data-label="Fase"><span class="badge badge--gray"><?= e($m['fase']) ?></span></td>
                         <td data-label="Cruce"><?= e($m['a_label']) ?> <span class="muted">vs</span> <?= e($m['b_label']) ?></td>
                         <td data-label="Sets" class="num"><strong><?= e($m['score']) ?></strong></td>
-                        <td data-label="Puntos" class="num"><?= e($m['puntos']) ?></td>
-                        <td data-label="Ganador"><?= icon('trophy', 'winner-icon') ?> <?= e($m['ganador_label']) ?></td>
+                        <td data-label="Puntos" class="num"><?= $m['puntos'] !== '' ? e($m['puntos']) : '<span class="muted">—</span>' ?></td>
+                        <td data-label="Ganador"><?= icon('trophy', 'winner-icon') ?> <?= e($ganadorLabel) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

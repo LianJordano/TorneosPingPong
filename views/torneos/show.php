@@ -209,8 +209,12 @@ $sorteoConfirm = '¿Sortear las parejas al azar entre los inscritos individuales
         </div>
 
         <?php if ($totalInscritos > 0): ?>
-            <div class="progress torneo-insc__progress" role="img" aria-label="<?= e((string) $pagados) ?> de <?= e((string) $totalInscritos) ?> con el pago registrado">
-                <span style="--value: <?= e((string) round($pagados * 100 / $totalInscritos)) ?>%"></span>
+            <?php $pctPagos = (int) round($pagados * 100 / $totalInscritos); ?>
+            <div class="torneo-insc__progress-row">
+                <div class="progress torneo-insc__progress" role="progressbar" aria-label="<?= e((string) $pagados) ?> de <?= e((string) $totalInscritos) ?> con el pago registrado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= e((string) $pctPagos) ?>">
+                    <span style="--value: <?= e((string) $pctPagos) ?>%"></span>
+                </div>
+                <span class="torneo-insc__pct<?= $pctPagos === 100 ? ' is-complete' : '' ?>"><?= e((string) $pctPagos) ?>%</span>
             </div>
         <?php endif; ?>
 
@@ -341,14 +345,29 @@ $sorteoConfirm = '¿Sortear las parejas al azar entre los inscritos individuales
                     <a class="btn btn--secondary btn--sm" href="<?= e($base) ?>/editar"><?= icon('edit') ?> Editar</a>
                 <?php endif; ?>
             </div>
+            <div class="torneo-specs" aria-label="Reglas principales">
+                <div class="torneo-spec">
+                    <span class="torneo-spec__label">Sets liga</span>
+                    <strong class="torneo-spec__val"><?= e($formatoLabel((int) $torneo['formato_sets_liga'])) ?></strong>
+                </div>
+                <div class="torneo-spec">
+                    <span class="torneo-spec__label">Sets bracket</span>
+                    <strong class="torneo-spec__val"><?= e($formatoLabel((int) $torneo['formato_sets_bracket'])) ?></strong>
+                </div>
+                <div class="torneo-spec">
+                    <span class="torneo-spec__label">Pts / set</span>
+                    <strong class="torneo-spec__val"><?= e((string) $torneo['puntos_por_set']) ?></strong>
+                    <span class="torneo-spec__sub">Dif. mín. <?= e((string) $torneo['diferencia_minima']) ?></span>
+                </div>
+                <div class="torneo-spec">
+                    <span class="torneo-spec__label">Clasificados</span>
+                    <strong class="torneo-spec__val"><?= e((string) $torneo['num_clasificados']) ?></strong>
+                </div>
+            </div>
             <dl class="datalist">
                 <dt>Lugar</dt><dd><?= e(!empty($torneo['lugar']) ? $torneo['lugar'] : '—') ?></dd>
                 <dt>Fechas</dt><dd><?= e($fechas !== '' ? $fechas : '—') ?></dd>
-                <dt>Sets en la liga</dt><dd><?= e($formatoLabel((int) $torneo['formato_sets_liga'])) ?></dd>
-                <dt>Sets en el bracket</dt><dd><?= e($formatoLabel((int) $torneo['formato_sets_bracket'])) ?></dd>
-                <dt>Puntos por set</dt><dd><?= e((string) $torneo['puntos_por_set']) ?> <span class="muted">(diferencia mínima <?= e((string) $torneo['diferencia_minima']) ?>)</span></dd>
                 <dt>Puntos por victoria</dt><dd><?= e((string) $torneo['puntos_por_victoria']) ?></dd>
-                <dt>Clasificados</dt><dd><?= e((string) $torneo['num_clasificados']) ?></dd>
                 <dt>Posiciones premiadas</dt><dd><?= e((string) $torneo['posiciones_premiadas']) ?></dd>
                 <dt>Cuota</dt><dd><?= e(($torneo['cuota_inscripcion'] ?? '') !== '' && $torneo['cuota_inscripcion'] !== null ? $torneo['cuota_inscripcion'] : '—') ?></dd>
                 <dt>Pozo</dt><dd><?= ($torneo['pozo_total'] ?? '') !== '' && $torneo['pozo_total'] !== null ? e($torneo['pozo_total']) : '<span class="muted">Cuota × inscritos</span>' ?></dd>

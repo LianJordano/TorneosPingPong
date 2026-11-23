@@ -133,14 +133,17 @@
     align-items: center;
     justify-content: center;
     min-width: 3.5rem;
-    padding: 0.3rem 0.7rem;
+    padding: 0.3rem 0.75rem;
     border-radius: var(--r-pill);
     background: var(--primary-soft);
     border: 1px solid var(--primary-soft-border);
-    color: var(--text);
+    color: var(--primary-text);
     font-family: var(--font-display);
+    font-size: var(--fs-sm);
     font-weight: 700;
+    letter-spacing: 0.04em;
     font-variant-numeric: tabular-nums;
+    box-shadow: var(--shadow-xs);
 }
 
 /* ---------- Standings markers ---------- */
@@ -170,11 +173,12 @@
 /* ---------- Bracket ---------- */
 .bracket-shell {
     margin-bottom: var(--sp-6);
-    padding: var(--sp-4);
+    padding: var(--sp-5) var(--sp-4);
     border-radius: var(--r-xl);
     border: 1px solid var(--border);
     background:
-        radial-gradient(120% 80% at 100% 0%, color-mix(in srgb, var(--gold) 12%, transparent), transparent 55%),
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--gold) 10%, transparent), transparent 44%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--primary) 6%, transparent), transparent 45%),
         var(--surface-2);
 }
 
@@ -191,6 +195,18 @@
 
 .bracket:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r); }
 
+.bracket--tree {
+    --col-gap: 44px;
+    --line-color: var(--border-strong);
+    --line-active: var(--success);
+    --line-final: var(--gold);
+    align-items: stretch;
+    gap: 0 var(--col-gap);
+    width: max-content;
+    min-width: 100%;
+    padding-bottom: var(--sp-2);
+}
+
 .bracket__round {
     flex: 0 0 min(78vw, 250px);
     display: flex;
@@ -198,6 +214,31 @@
     justify-content: space-around;
     gap: var(--sp-3);
     scroll-snap-align: start;
+}
+
+.bracket--tree .bracket__round {
+    flex: 1 0 264px;
+    max-width: 300px;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    justify-content: initial;
+    gap: var(--sp-4);
+}
+
+.bracket__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r);
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.bracket__round--final .bracket__head {
+    background: var(--gold-soft);
+    border-color: var(--warning-border);
 }
 
 .bracket__title {
@@ -224,6 +265,129 @@
     color: var(--warning-text);
 }
 
+.bracket__head .bracket__title {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+}
+
+.bracket__head .bracket__title .icon { width: 14px; height: 14px; color: var(--gold); }
+
+.bracket__round--final .bracket__head .bracket__title {
+    background: transparent;
+    border: 0;
+    color: var(--warning-text);
+}
+
+.bracket__meta {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.bracket__matches {
+    display: flex;
+    flex-direction: column;
+}
+
+.bracket__slot {
+    position: relative;
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.bracket__slot > .bracket__match { width: 100%; }
+
+/* Incoming horizontal connector (every round after Round 1) */
+.bracket--tree .bracket__round:not(:first-child) .bracket__slot::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--col-gap) / -2);
+    top: 50%;
+    width: calc(var(--col-gap) / 2);
+    height: 2px;
+    background: var(--line-color);
+    pointer-events: none;
+}
+
+.bracket--tree .bracket__round:not(:first-child) .bracket__slot.is-resolved::before {
+    background: var(--line-active);
+}
+
+.bracket--tree .bracket__round--final:not(:first-child) .bracket__slot.is-resolved::before {
+    background: var(--line-final);
+}
+
+/* Outgoing orthogonal elbow for Top of Pair (┐) */
+.bracket--tree .bracket__round:not(:last-child) .bracket__slot[data-pair-pos="top"]::after {
+    content: "";
+    position: absolute;
+    right: calc(var(--col-gap) / -2);
+    top: 50%;
+    width: calc(var(--col-gap) / 2);
+    height: 50%;
+    border-top: 2px solid var(--line-color);
+    border-right: 2px solid var(--line-color);
+    border-top-right-radius: 6px;
+    pointer-events: none;
+}
+
+.bracket--tree .bracket__round:not(:last-child) .bracket__slot[data-pair-pos="top"].is-resolved::after {
+    border-color: var(--line-active);
+}
+
+/* Outgoing orthogonal elbow for Bottom of Pair (┘) */
+.bracket--tree .bracket__round:not(:last-child) .bracket__slot[data-pair-pos="bottom"]::after {
+    content: "";
+    position: absolute;
+    right: calc(var(--col-gap) / -2);
+    bottom: 50%;
+    width: calc(var(--col-gap) / 2);
+    height: 50%;
+    border-bottom: 2px solid var(--line-color);
+    border-right: 2px solid var(--line-color);
+    border-bottom-right-radius: 6px;
+    pointer-events: none;
+}
+
+.bracket--tree .bracket__round:not(:last-child) .bracket__slot[data-pair-pos="bottom"].is-resolved::after {
+    border-color: var(--line-active);
+}
+
+/* Outgoing straight line from Final if followed by another node */
+.bracket--tree .bracket__round:not(:last-child) .bracket__slot[data-pair-pos="final"]::after {
+    content: "";
+    position: absolute;
+    right: calc(var(--col-gap) / -2);
+    top: 50%;
+    width: calc(var(--col-gap) / 2);
+    height: 2px;
+    background: var(--line-color);
+    pointer-events: none;
+}
+
+.bracket--tree .bracket__round:not(:last-child) .bracket__slot[data-pair-pos="final"].is-resolved::after {
+    background: var(--line-final);
+}
+
+@media (max-width: 640px) {
+    .bracket-shell { padding: var(--sp-3); }
+    .bracket--tree { --col-gap: 32px; }
+    .bracket--tree .bracket__round { flex-basis: 236px; }
+}
+
 .bracket__match {
     position: relative;
     overflow: hidden;
@@ -231,12 +395,21 @@
     border: 1px solid var(--border);
     background: var(--surface);
     box-shadow: var(--shadow-sm);
+    transition: transform 160ms var(--ease), box-shadow 160ms var(--ease), border-color 160ms var(--ease);
+}
+
+.bracket__match:hover {
+    transform: translateY(-1px);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow);
 }
 
 .bracket__match--final {
     border-color: var(--gold);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 22%, transparent), var(--shadow);
 }
+
+.bracket__match--final:hover { border-color: var(--gold); }
 
 .bracket__match--crowned { background: linear-gradient(180deg, var(--gold-soft), var(--surface)); }
 
@@ -287,18 +460,31 @@
 
 .bm-win .bm-name .icon { color: var(--success-text); flex: none; }
 
+.bm-lose { opacity: 0.58; }
+
 .bm-sets {
     flex: none;
-    min-width: 1.75rem;
-    padding: 0.05rem 0.5rem;
-    border-radius: var(--r-pill);
-    background: var(--surface-3);
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.85rem;
+    height: 1.55rem;
+    padding: 0 0.45rem;
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     color: var(--text-2);
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     text-align: center;
 }
 
-.bm-win .bm-sets { background: var(--surface); color: var(--success-text); box-shadow: inset 0 0 0 1px var(--success-border); }
+.bm-win .bm-sets {
+    background: var(--success);
+    border-color: var(--success);
+    color: var(--on-primary);
+}
 
 .bm-foot {
     display: flex;
@@ -462,25 +648,41 @@
     --medal-soft: var(--silver-soft);
     --medal-ink: var(--text-2);
     position: relative;
+    overflow: hidden;
     display: grid;
     justify-items: center;
     gap: var(--sp-1);
-    padding: var(--sp-5) var(--sp-4) var(--sp-4);
-    border-radius: var(--r-lg);
+    padding: var(--sp-5) var(--sp-4) 0;
+    border-radius: var(--r-xl);
     border: 1px solid var(--border);
     border-top: 4px solid var(--medal);
     background: linear-gradient(180deg, var(--medal-soft), var(--surface) 70%);
     color: var(--text);
     text-align: center;
     box-shadow: var(--shadow-sm);
+    transition: transform 180ms var(--ease), box-shadow 180ms var(--ease), border-color 180ms var(--ease);
 }
 
-.podio__card--1 { --medal: var(--gold); --medal-soft: var(--gold-soft); --medal-ink: var(--warning-text); }
+.podio__card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
+}
+
+.podio__card--1 {
+    --medal: var(--gold);
+    --medal-soft: var(--gold-soft);
+    --medal-ink: var(--warning-text);
+    border-color: color-mix(in srgb, var(--gold) 65%, var(--border));
+    box-shadow: 0 14px 32px -16px color-mix(in srgb, var(--gold) 55%, transparent);
+}
+.podio__card--1:hover {
+    box-shadow: 0 18px 38px -14px color-mix(in srgb, var(--gold) 68%, transparent);
+}
 .podio__card--2 { --medal: var(--silver); --medal-soft: var(--silver-soft); --medal-ink: var(--text-2); }
 .podio__card--3 { --medal: var(--bronze); --medal-soft: var(--bronze-soft); --medal-ink: var(--warning-text); }
 
 @media (min-width: 640px) {
-    .podio__card--1 { order: 2; padding-top: var(--sp-8); box-shadow: var(--shadow); }
+    .podio__card--1 { order: 2; padding-top: var(--sp-8); }
     .podio__card--2 { order: 1; }
     .podio__card--3 { order: 3; }
 }
@@ -543,7 +745,10 @@
 
     .bracket-shell { padding: 0; border: 0; }
     .bracket { overflow: visible; flex-wrap: wrap; }
+    .bracket--tree { width: auto; gap: var(--sp-4); }
     .bracket__round { flex: 1 1 180px; }
+    .bracket__slot::before,
+    .bracket__slot::after { display: none !important; }
     .bracket__match,
     .podio__card { break-inside: avoid; border-color: #999 !important; }
     .bm-win { background: #eee !important; }
@@ -553,13 +758,16 @@
     .podio__medal { animation: none; border: 1px solid #999; }
 }
 
-/* Podium step: the position number at the base of each podium card. */
+/* Podium step: full-width base flush at the bottom of each podium card. */
 .podio__step {
     display: grid;
     place-items: center;
-    margin-top: var(--sp-3);
-    padding: var(--sp-2);
-    border-radius: var(--r) var(--r) 0 0;
+    justify-self: stretch;
+    width: calc(100% + var(--sp-4) * 2);
+    margin: var(--sp-4) calc(var(--sp-4) * -1) 0;
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: 0;
+    border-top: 1px solid color-mix(in srgb, var(--medal) 30%, var(--border));
     background: var(--medal-soft, var(--surface-3));
     color: var(--medal-ink, var(--text-2));
     font-family: var(--font-display);
@@ -567,3 +775,5 @@
     font-weight: 700;
     line-height: 1;
 }
+
+.podio__card--1 .podio__step { padding-block: var(--sp-4); }

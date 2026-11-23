@@ -46,6 +46,12 @@ $navGroups['Ayuda'] = [
                 </span>
             </a>
 
+            <button type="button" class="cmd-trigger" data-cmd-open aria-label="Búsqueda rápida (Ctrl+K)">
+                <?= icon('search', 'icon--sm') ?>
+                <span>Ir rápido…</span>
+                <kbd>Ctrl K</kbd>
+            </button>
+
             <nav class="side-nav" aria-label="Secciones">
                 <?php foreach ($navGroups as $groupTitle => $links): ?>
                     <div class="side-nav__group">
@@ -94,11 +100,19 @@ $navGroups['Ayuda'] = [
                     <span class="brand__text"><strong><?= e($appName) ?></strong></span>
                 </a>
                 <span class="topbar__spacer"></span>
+                <button class="btn btn--ghost btn--icon btn--sm" type="button" data-cmd-open aria-label="Búsqueda rápida">
+                    <?= icon('search') ?>
+                </button>
+                <button class="btn btn--ghost btn--icon btn--sm" type="button" data-theme-toggle aria-pressed="false" aria-label="Cambiar tema">
+                    <?= icon('moon') ?>
+                </button>
                 <span class="avatar" title="<?= e($authUser['nombre'] ?? '') ?>" aria-hidden="true"><?= e(initials($authUser['nombre'] ?? '')) ?></span>
             </header>
 
             <main id="main" class="page" tabindex="-1">
-                <?php require __DIR__ . '/partials/flashes.php'; ?>
+                <?php if (!empty($flashes)): ?>
+                    <div class="flash-stack"><?php require __DIR__ . '/partials/flashes.php'; ?></div>
+                <?php endif; ?>
                 <?= $content ?? '' ?>
             </main>
 

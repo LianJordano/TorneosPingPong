@@ -122,12 +122,14 @@ $resumen = static function (array $sets): array {
                     $r = $fin ? $resumen($p['sets']) : null;
                     $ganaA = $fin && (int) $p['ganador_inscripcion_id'] === (int) $p['inscripcion_a_id'];
                     $ganaB = $fin && (int) $p['ganador_inscripcion_id'] === (int) $p['inscripcion_b_id'];
+                    $pierdeA = $fin && !$ganaA && $ganaB;
+                    $pierdeB = $fin && !$ganaB && $ganaA;
                     $esProximo = (int) $p['id'] === $proximoPendienteId;
                     $nombreA = $p['a_label'] ?? 'BYE';
                     $nombreB = $p['b_label'] ?? 'BYE';
                     ?>
                     <li class="match<?= $esProximo ? ' match-row--next' : '' ?>">
-                        <span class="match__side match__side--a<?= $ganaA ? ' winner' : '' ?>">
+                        <span class="match__side match__side--a<?= $ganaA ? ' winner' : ($pierdeA ? ' loser' : '') ?>">
                             <?php if ($ganaA): ?><?= icon('check-circle', 'icon--sm') ?><span class="sr-only">Ganador:</span><?php endif; ?>
                             <span class="match__name"><?= e($nombreA) ?></span>
                         </span>
@@ -145,7 +147,7 @@ $resumen = static function (array $sets): array {
                                 <span class="badge badge--gray">Pendiente</span>
                             <?php endif; ?>
                         </span>
-                        <span class="match__side match__side--b<?= $ganaB ? ' winner' : '' ?>">
+                        <span class="match__side match__side--b<?= $ganaB ? ' winner' : ($pierdeB ? ' loser' : '') ?>">
                             <?php if ($ganaB): ?><?= icon('check-circle', 'icon--sm') ?><span class="sr-only">Ganador:</span><?php endif; ?>
                             <span class="match__name"><?= e($nombreB) ?></span>
                         </span>

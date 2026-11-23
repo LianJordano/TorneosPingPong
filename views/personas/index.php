@@ -58,6 +58,21 @@ $etiquetasOrden = [
 $ventana = 2;
 $pagInicio = max(1, $pagina - $ventana);
 $pagFin = min($totalPaginas, $pagina + $ventana);
+
+/** Semantic badge tone for player skill level. */
+$badgeNivel = static function (string $nivel): string {
+    $n = mb_strtolower(trim($nivel));
+    if (str_contains($n, 'avanz') || str_contains($n, 'expert') || str_contains($n, 'pro') || str_contains($n, 'alto') || $n === 'a') {
+        return 'badge--purple';
+    }
+    if (str_contains($n, 'inter') || str_contains($n, 'medio') || $n === 'b') {
+        return 'badge--blue';
+    }
+    if (str_contains($n, 'princ') || str_contains($n, 'basic') || str_contains($n, 'básic') || str_contains($n, 'inic') || str_contains($n, 'bajo') || $n === 'c') {
+        return 'badge--cyan';
+    }
+    return 'badge--amber';
+};
 ?>
 <header class="page-head">
     <div>
@@ -159,10 +174,12 @@ $pagFin = min($totalPaginas, $pagina + $ventana);
                 <tbody>
                 <?php foreach ($personas as $p): ?>
                     <?php
-                    $id = (string) $p['id'];
-                    $esUsuario = isset($conUsuario[(int) $p['id']]);
+                    $idInt = (int) $p['id'];
+                    $id = (string) $idInt;
+                    $esUsuario = isset($conUsuario[$idInt]);
                     $activo = (int) $p['activo'] === 1;
                     $nombreCompleto = $p['apellido'] . ', ' . $p['nombre'];
+                    $avatarTone = 'avatar--t' . ($idInt % 5);
                     ?>
                     <tr class="<?= $activo ? '' : 'row--muted' ?>">
                         <?php if ($puedeGestionar): ?>
@@ -170,12 +187,12 @@ $pagFin = min($totalPaginas, $pagina + $ventana);
                         <?php endif; ?>
                         <td class="cell--primary">
                             <a class="player-cell" href="/personas/<?= e($id) ?>">
-                                <span class="avatar" aria-hidden="true"><?= e(initials($p['nombre'] . ' ' . $p['apellido'])) ?></span>
+                                <span class="avatar <?= $avatarTone ?>" aria-hidden="true"><?= e(initials($p['nombre'] . ' ' . $p['apellido'])) ?></span>
                                 <span class="player-cell__name"><?= e($p['apellido']) ?>, <?= e($p['nombre']) ?></span>
                             </a>
                         </td>
-                        <td data-label="Área"><?php if (!empty($p['area'])): ?><?= e($p['area']) ?><?php else: ?><span class="muted">Sin área</span><?php endif; ?></td>
-                        <td data-label="Nivel"><?php if (!empty($p['nivel'])): ?><?= e($p['nivel']) ?><?php else: ?><span class="muted">Sin nivel</span><?php endif; ?></td>
+                        <td data-label="Área"><?php if (!empty($p['area'])): ?><span class="player-tag"><?= e($p['area']) ?></span><?php else: ?><span class="muted">Sin área</span><?php endif; ?></td>
+                        <td data-label="Nivel"><?php if (!empty($p['nivel'])): ?><span class="badge <?= $badgeNivel((string) $p['nivel']) ?>"><?= e($p['nivel']) ?></span><?php else: ?><span class="muted">Sin nivel</span><?php endif; ?></td>
                         <td data-label="Identificador"><?php if (!empty($p['identificador_interno'])): ?><span class="num"><?= e($p['identificador_interno']) ?></span><?php else: ?><span class="muted" aria-hidden="true">—</span><span class="sr-only">Sin identificador</span><?php endif; ?></td>
                         <td data-label="Usuario">
                             <?php if ($esUsuario): ?>

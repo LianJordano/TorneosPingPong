@@ -100,56 +100,70 @@ $conLiga = !in_array($estado, [EstadoTorneo::BORRADOR->value, EstadoTorneo::INSC
 
     <p class="bracket-hint show-mobile no-print"><?= icon('arrow-right', 'icon--sm') ?> Deslizá para ver todas las rondas.</p>
     <section class="bracket-shell" aria-label="Cuadro eliminatorio">
-        <div class="bracket" tabindex="0" aria-label="Cuadro eliminatorio, desplazable">
+        <div class="bracket bracket--tree" tabindex="0" aria-label="Cuadro eliminatorio, desplazable">
             <?php for ($ronda = 1; $ronda <= $totalRondas; $ronda++): ?>
-                <?php $esFinal = $ronda === $totalRondas; ?>
+                <?php
+                $esFinal = $ronda === $totalRondas;
+                $partidosRonda = $porRonda[$ronda] ?? [];
+                $totalRonda = count($partidosRonda);
+                $jugadosRonda = count(array_filter($partidosRonda, static fn (array $x): bool => $x['estado'] === 'FINALIZADO'));
+                ?>
                 <div class="bracket__round<?= $esFinal ? ' bracket__round--final' : '' ?>">
-                    <h3 class="bracket__title"><?= e(BracketEliminacion::nombreRonda($ronda, $totalRondas)) ?></h3>
-                    <?php foreach ($porRonda[$ronda] ?? [] as $p): ?>
-                        <?php
-                        $fin = $p['estado'] === 'FINALIZADO';
-                        $bye = $fin && ($p['inscripcion_a_id'] === null || $p['inscripcion_b_id'] === null);
-                        $ganaA = $fin && (int) $p['ganador_inscripcion_id'] === (int) $p['inscripcion_a_id'];
-                        $ganaB = $fin && (int) $p['ganador_inscripcion_id'] === (int) $p['inscripcion_b_id'];
-                        $ambos = $p['inscripcion_a_id'] !== null && $p['inscripcion_b_id'] !== null;
-                        $r = $fin ? $resumen($p) : null;
-                        $lados = [
-                            ['nombre' => $p['a_label'] ?? null, 'gana' => $ganaA, 'sets' => $r['sa'] ?? null],
-                            ['nombre' => $p['b_label'] ?? null, 'gana' => $ganaB, 'sets' => $r['sb'] ?? null],
-                        ];
-                        ?>
-                        <div class="bracket__match<?= $esFinal ? ' bracket__match--final' : '' ?><?= $esFinal && $fin ? ' bracket__match--crowned' : '' ?>">
-                            <?php if ($esFinal): ?><div class="bracket__final-tag"><?= icon('crown', 'icon--sm') ?> <?= $fin ? 'Final jugada' : 'La gran final' ?></div><?php endif; ?>
-                            <?php foreach ($lados as $lado): ?>
-                                <div class="bm-row<?= $lado['gana'] ? ' bm-win' : '' ?>">
-                                    <span class="bm-name">
-                                        <?php if ($lado['gana']): ?><?= icon('check-circle', 'icon--sm') ?><span class="sr-only">Ganador:</span><?php endif; ?>
-                                        <?php if ($lado['nombre'] !== null): ?>
-                                            <?= e($lado['nombre']) ?>
+                    <div class="bracket__head">
+                        <h3 class="bracket__title"><?= $esFinal ? icon('crown', 'icon--sm') . ' ' : '' ?><?= e(BracketEliminacion::nombreRonda($ronda, $totalRondas)) ?></h3>
+                        <span class="bracket__meta"><?= e((string) $jugadosRonda) ?>/<?= e((string) $totalRonda) ?> jugados</span>
+                    </div>
+                    <div class="bracket__matches">
+                        <?php foreach ($partidosRonda as $idx => $p): ?>
+                            <?php
+                            $fin = $p['estado'] === 'FINALIZADO';
+                            $bye = $fin && ($p['inscripcion_a_id'] === null || $p['inscripcion_b_id'] === null);
+                            $ganaA = $fin && (int) $p['ganador_inscripcion_id'] === (int) $p['inscripcion_a_id'];
+                            $ganaB = $fin && (int) $p['ganador_inscripcion_id'] === (int) $p['inscripcion_b_id'];
+                            $ambos = $p['inscripcion_a_id'] !== null && $p['inscripcion_b_id'] !== null;
+                            $r = $fin ? $resumen($p) : null;
+                            $pairPos = $esFinal ? 'final' : ($idx % 2 === 0 ? 'top' : 'bottom');
+                            $lados = [
+                                ['nombre' => $p['a_label'] ?? null, 'gana' => $ganaA, 'sets' => $r['sa'] ?? null],
+                                ['nombre' => $p['b_label'] ?? null, 'gana' => $ganaB, 'sets' => $r['sb'] ?? null],
+                            ];
+                            ?>
+                            <div class="bracket__slot<?= $fin ? ' is-resolved' : '' ?>" data-pair-pos="<?= e($pairPos) ?>">
+                                <div class="bracket__match<?= $esFinal ? ' bracket__match--final' : '' ?><?= $esFinal && $fin ? ' bracket__match--crowned' : '' ?>">
+                                    <?php if ($esFinal): ?><div class="bracket__final-tag"><?= icon('crown', 'icon--sm') ?> <?= $fin ? 'Final jugada' : 'La gran final' ?></div><?php endif; ?>
+                                    <?php foreach ($lados as $lado): ?>
+                                        <?php $pierde = $fin && !$bye && !$lado['gana'] && $lado['nombre'] !== null; ?>
+                                        <div class="bm-row<?= $lado['gana'] ? ' bm-win' : ($pierde ? ' bm-lose' : '') ?>">
+                                            <span class="bm-name">
+                                                <?php if ($lado['gana']): ?><?= icon('check-circle', 'icon--sm') ?><span class="sr-only">Ganador:</span><?php endif; ?>
+                                                <?php if ($lado['nombre'] !== null): ?>
+                                                    <?= e($lado['nombre']) ?>
+                                                <?php else: ?>
+                                                    <span class="bm-tbd"><?= $bye ? '—' : 'Por definir' ?></span>
+                                                <?php endif; ?>
+                                            </span>
+                                            <?php if ($fin && !$bye): ?><b class="bm-sets"><span class="sr-only">sets: </span><?= e((string) $lado['sets']) ?></b><?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                    <div class="bm-foot">
+                                        <?php if ($bye): ?>
+                                            <span class="badge badge--gray">Pasa directo</span>
+                                        <?php elseif ($fin): ?>
+                                            <small class="muted"><?= e($r['detalle']) ?></small>
                                         <?php else: ?>
-                                            <span class="bm-tbd"><?= $bye ? '—' : 'Por definir' ?></span>
+                                            <span class="badge badge--gray">Pendiente</span>
                                         <?php endif; ?>
-                                    </span>
-                                    <?php if ($fin && !$bye): ?><b class="bm-sets"><span class="sr-only">sets: </span><?= e((string) $lado['sets']) ?></b><?php endif; ?>
+                                        <?php if ($puedeAnotar && $ambos): ?>
+                                            <a class="btn btn--sm <?= $fin ? 'btn--ghost' : 'btn--secondary' ?> no-print" href="/torneos/<?= e($tid) ?>/partidos/<?= e((string) $p['id']) ?>"
+                                               aria-label="<?= $fin ? 'Editar' : 'Cargar' ?> resultado de <?= e((string) $p['a_label']) ?> contra <?= e((string) $p['b_label']) ?>">
+                                                <?= icon($fin ? 'edit' : 'plus') ?> <?= $fin ? 'Editar' : 'Cargar' ?>
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                            <?php endforeach; ?>
-                            <div class="bm-foot">
-                                <?php if ($bye): ?>
-                                    <span class="badge badge--gray">Pasa directo</span>
-                                <?php elseif ($fin): ?>
-                                    <small class="muted"><?= e($r['detalle']) ?></small>
-                                <?php else: ?>
-                                    <span class="badge badge--gray">Pendiente</span>
-                                <?php endif; ?>
-                                <?php if ($puedeAnotar && $ambos): ?>
-                                    <a class="btn btn--sm <?= $fin ? 'btn--ghost' : 'btn--secondary' ?> no-print" href="/torneos/<?= e($tid) ?>/partidos/<?= e((string) $p['id']) ?>"
-                                       aria-label="<?= $fin ? 'Editar' : 'Cargar' ?> resultado de <?= e((string) $p['a_label']) ?> contra <?= e((string) $p['b_label']) ?>">
-                                        <?= icon($fin ? 'edit' : 'plus') ?> <?= $fin ? 'Editar' : 'Cargar' ?>
-                                    </a>
-                                <?php endif; ?>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             <?php endfor; ?>
         </div>
