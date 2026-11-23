@@ -207,7 +207,7 @@ $resumenEquipos = $dobles
                                 <label for="f-nombre">Nombre</label>
                                 <input type="text" id="f-nombre" name="nombre" maxlength="150" required value="<?= e((string) $fiesta['nombre']) ?>">
                             </div>
-                            <?php $cfg = $fiesta; require __DIR__ . '/_config.php'; ?>
+                            <?php $cfg = $fiesta; $modoCompacto = true; require __DIR__ . '/_config.php'; ?>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn--secondary"><?= icon('check') ?> Guardar ajustes</button>

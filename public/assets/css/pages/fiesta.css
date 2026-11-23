@@ -1787,3 +1787,543 @@
     .rt-reel__item { animation: none !important; }
     .rt-vignette, .rt-board { transition: none !important; }
 }
+
+/* ==========================================================================
+   AAA Tournament Configurator Builder + Broadcast Live Preview
+   ========================================================================== */
+.fiesta-builder {
+    display: grid;
+    gap: var(--sp-6);
+    align-items: start;
+}
+@media (min-width: 1120px) {
+    .fiesta-builder {
+        grid-template-columns: minmax(0, 1fr) 340px;
+    }
+    .fiesta-builder__side {
+        position: sticky;
+        top: var(--sp-5);
+    }
+}
+.fiesta-builder__main {
+    display: grid;
+    gap: var(--sp-5);
+    min-width: 0;
+}
+.fiesta-builder__card {
+    display: grid;
+    gap: var(--sp-6);
+    padding: var(--sp-6);
+}
+.fiesta-name-field label {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.fiesta-name-field input {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    min-height: 50px;
+    padding: 0 var(--sp-4);
+    border-radius: var(--r-lg);
+}
+.fiesta-builder__actions {
+    justify-content: flex-end;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.fiesta-cfg {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: var(--sp-6);
+}
+.fiesta-cfg--compact { gap: var(--sp-4); }
+
+.fiesta-cfg-block {
+    display: grid;
+    gap: var(--sp-3);
+    padding-top: var(--sp-5);
+    border-top: 1px solid var(--border);
+}
+.fiesta-cfg--compact .fiesta-cfg-block {
+    gap: var(--sp-2);
+    padding-top: var(--sp-3);
+}
+.fiesta-cfg-block__head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+.fiesta-cfg-step {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--r);
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+}
+.fiesta-cfg-step--accent {
+    background: var(--primary-soft);
+    border-color: var(--primary-soft-border);
+    color: var(--primary-text);
+}
+.fiesta-cfg-step .icon { width: 15px; height: 15px; }
+.fiesta-cfg-block__title {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+.fiesta-cfg-block__sub {
+    margin: 2px 0 0;
+    font-size: var(--fs-xs);
+    color: var(--muted);
+}
+
+/* Quick Templates (Presets with crisp SVG icon badges) */
+.fiesta-presets {
+    display: grid;
+    gap: var(--sp-2);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 560px) {
+    .fiesta-presets { grid-template-columns: 1fr; }
+}
+.fiesta-cfg--compact .fiesta-presets {
+    grid-template-columns: 1fr;
+}
+.fiesta-preset {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: 10px 12px;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.fiesta-preset:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+.fiesta-preset.is-active {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.fiesta-preset:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.fiesta-preset__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--r);
+}
+.fiesta-preset__icon .icon { width: 17px; height: 17px; }
+.fiesta-preset__icon--blue   { background: var(--primary-soft); color: var(--primary-text); }
+.fiesta-preset__icon--purple { background: var(--purple-soft);  color: var(--purple-text); }
+.fiesta-preset__icon--green  { background: var(--success-soft); color: var(--success-text); }
+.fiesta-preset__icon--gold   { background: var(--gold-soft);    color: var(--warning-text); }
+.fiesta-preset__body { display: grid; gap: 1px; min-width: 0; }
+.fiesta-preset__name {
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+.fiesta-preset__meta {
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Polished Choice Cards inside Configurator (vertical Stripe-like cards for 3-col format) */
+.fiesta-cfg .segmented-choice--3 {
+    display: grid;
+    gap: var(--sp-3);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 720px) {
+    .fiesta-cfg .segmented-choice--3 { grid-template-columns: 1fr; }
+}
+.fiesta-cfg--compact .segmented-choice,
+.fiesta-cfg--compact .segmented-choice--3 {
+    grid-template-columns: 1fr;
+}
+.fiesta-cfg .segmented-choice--3 .choice-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-2);
+    padding: var(--sp-4);
+    border-radius: var(--r-lg);
+}
+.fiesta-cfg--compact .segmented-choice--3 .choice-card {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--sp-3);
+}
+.fiesta-cfg .choice-card {
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+.fiesta-cfg .choice-card:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+}
+.fiesta-cfg .choice-card:has(input:checked) {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary-soft) 72%, var(--surface));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+.fiesta-cfg .choice-card > .icon {
+    width: 20px;
+    height: 20px;
+    padding: 7px;
+    box-sizing: content-box;
+    border-radius: var(--r);
+    background: var(--surface-2);
+    color: var(--muted);
+    flex: none;
+}
+.fiesta-cfg .choice-card:has(input:checked) > .icon {
+    background: var(--primary);
+    color: var(--on-primary);
+}
+
+/* Groups / League Pill Pickers */
+.fiesta-grupos-panel {
+    display: grid;
+    gap: var(--sp-4);
+    padding: var(--sp-4);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+}
+@media (min-width: 640px) {
+    .fiesta-cfg:not(.fiesta-cfg--compact) .fiesta-grupos-panel {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+}
+.fiesta-grupos-panel[hidden] { display: none; }
+.fiesta-grupos-panel__field { display: grid; gap: var(--sp-2); align-content: start; }
+.fiesta-grupos-panel__field[hidden] { display: none; }
+.fiesta-grupos-panel__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.fiesta-pill-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.fiesta-pick {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-2);
+    font: inherit;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+.fiesta-pick[hidden] { display: none; }
+.fiesta-pick:hover { border-color: var(--primary); color: var(--primary-text); }
+.fiesta-pick.is-active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+}
+.fiesta-pick-input {
+    width: 3.4rem;
+    min-height: 34px;
+    padding: 4px 6px;
+    text-align: center;
+    border-radius: var(--r);
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+}
+
+/* Unified Linear-style Sets Matrix (single framed table, hairline dividers) */
+.fiesta-sets-matrix {
+    display: grid;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+}
+.fiesta-sets-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2) var(--sp-3);
+    padding: 12px var(--sp-4);
+    background: var(--surface);
+}
+.fiesta-sets-row + .fiesta-sets-row {
+    border-top: 1px solid var(--border);
+}
+.fiesta-sets-row[hidden] { display: none; }
+.fiesta-sets-row--base {
+    background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+}
+.fiesta-sets-row--final {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--gold-soft) 45%, var(--surface)), var(--surface) 60%);
+}
+.fiesta-sets-row__info {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+}
+.fiesta-sets-row__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r);
+    background: var(--surface-2);
+    color: var(--text-2);
+}
+.fiesta-sets-row__icon .icon { width: 15px; height: 15px; }
+.fiesta-sets-row__icon--gold {
+    background: var(--gold-soft);
+    color: var(--gold);
+}
+.fiesta-sets-row__name {
+    display: block;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+.fiesta-sets-row__desc {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+.fiesta-sets-legend { margin: 0; }
+
+/* Apple / Linear segmented control */
+.fiesta-seg {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--r);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+}
+.fiesta-seg__opt {
+    position: relative;
+    cursor: pointer;
+    margin: 0;
+}
+.fiesta-seg__opt input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    cursor: pointer;
+}
+.fiesta-seg__opt span {
+    display: inline-grid;
+    place-items: center;
+    min-width: 46px;
+    min-height: 28px;
+    padding: 0 9px;
+    border-radius: calc(var(--r) - 2px);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--muted);
+    transition: background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+.fiesta-seg__opt:hover span { color: var(--text); }
+.fiesta-seg__opt input:checked + span {
+    background: var(--surface);
+    color: var(--primary-text);
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14), 0 0 0 1px var(--border);
+}
+.fiesta-sets-row--final .fiesta-seg__opt input:checked + span {
+    background: var(--gold);
+    color: #0b1120;
+    box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--gold) 65%, transparent);
+}
+.fiesta-seg__opt input:focus-visible + span { box-shadow: var(--focus-ring); }
+
+/* Dark Broadcast Live Preview Card (Sticky Sidebar in form.php) */
+.fiesta-preview {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: var(--sp-4);
+    padding: var(--sp-5);
+    border-radius: var(--r-xl);
+    border: 1px solid var(--hero-border, rgba(255, 255, 255, 0.12));
+    background: var(--hero-bg, linear-gradient(145deg, #0b1224, #162344));
+    color: #f8fafc;
+    box-shadow: 0 22px 46px -20px rgba(2, 6, 23, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.fiesta-preview::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse 90% 80% at 80% 10%, #000 10%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 80% at 80% 10%, #000 10%, transparent 75%);
+    pointer-events: none;
+}
+.fiesta-preview > * { position: relative; z-index: 1; }
+.fiesta-preview__head { display: grid; gap: 4px; }
+.fiesta-preview__head .eyebrow { color: #93c5fd; }
+.fiesta-preview__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    line-height: 1.2;
+    color: #ffffff;
+    word-break: break-word;
+}
+
+/* Connected Vertical Timeline inside Preview */
+.fiesta-pv__flow {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+    position: relative;
+}
+.fiesta-pv__flow::before {
+    content: "";
+    position: absolute;
+    left: 19px;
+    top: 18px;
+    bottom: 18px;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(147, 197, 253, 0.4), rgba(251, 191, 36, 0.65));
+    pointer-events: none;
+}
+.fiesta-pv__step {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: 8px 10px;
+    border-radius: var(--r-lg);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    font-size: var(--fs-xs);
+}
+.fiesta-pv__step.is-gold {
+    border-color: rgba(251, 191, 36, 0.45);
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.18), rgba(255, 255, 255, 0.06));
+}
+.fiesta-pv__dot {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--r-pill);
+    background: rgba(37, 99, 235, 0.35);
+    border: 1px solid rgba(147, 197, 253, 0.45);
+    color: #dbeafe;
+}
+.fiesta-pv__dot .icon { width: 13px; height: 13px; }
+.fiesta-pv__step.is-gold .fiesta-pv__dot {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0b1120;
+    box-shadow: 0 0 14px rgba(251, 191, 36, 0.55);
+}
+.fiesta-pv__stitle { flex: 1; font-weight: 600; color: #f1f5f9; }
+.fiesta-pv__stag {
+    padding: 2px 8px;
+    border-radius: var(--r-pill);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    white-space: nowrap;
+}
+.fiesta-pv__step.is-gold .fiesta-pv__stag {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0b1120;
+}
+
+.fiesta-preview__stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-2);
+}
+.fiesta-preview__stat {
+    display: grid;
+    gap: 2px;
+    padding: 10px 12px;
+    border-radius: var(--r-lg);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.fiesta-preview__stat span {
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(226, 232, 240, 0.65);
+}
+.fiesta-preview__stat strong {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    color: #ffffff;
+}
+.fiesta-preview__note {
+    margin: 0;
+    padding-top: var(--sp-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: var(--fs-xs);
+    color: rgba(226, 232, 240, 0.78);
+    line-height: 1.45;
+}
